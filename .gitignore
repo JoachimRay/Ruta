@@ -1,0 +1,13 @@
+node_modules
+# Next.js build output
+.next
+
+# Optional: lockfile (if you don't want to commit it from nested project roots)
+# If you manage lockfiles centrally, uncomment the following line to ignore this project's lockfile
+# package-lock.json
+
+# Local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

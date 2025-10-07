@@ -9,10 +9,7 @@ export default function Home() {
     <html>
       <body>
         <h1>RUTA</h1>
-        <CebuMap />
-
-
-   
+        <CebuMap/>
       </body>
     </html>
   );

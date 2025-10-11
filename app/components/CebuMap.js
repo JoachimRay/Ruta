@@ -1,9 +1,16 @@
 "use client";
+// This file is a client-only React component that renders a Leaflet map
+// using react-leaflet. It depends on browser-only globals like `navigator`
+// and `document`, so keep it client-only via the directive above.
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from "react-leaflet";
 import { useState, useEffect } from "react";
 import L from "leaflet";
 
-// Simple icon fix for Next.js + Leaflet
+// Next.js + Leaflet integration note:
+// Leaflet looks for marker image assets relative to its own package by
+// default. In SSR or some bundlers the paths may not resolve, leaving the
+// default marker icons broken. Overriding the default URLs to CDN-hosted
+// images is a simple workaround that keeps marker visuals working.
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -11,7 +18,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
+// Main map component: handles geolocation, click-to-pin (reverse geocode),
+// and route drawing. The component keeps lightweight local state and relies
+// on a small server endpoint (/api/reverse) to convert coordinates into
+// human-readable addresses.
 export default function CebuMap() {
+
+  // ALL OF THESE ARE STATE VARIABLES TO STORE DATA
+  // Murag siya int value = 0 sa C++
   const [userPosition, setUserPosition] = useState(null);
   const [destination, setDestination] = useState(null);
   const [routeCoordinates, setRouteCoordinates] = useState([]);
@@ -31,7 +45,9 @@ export default function CebuMap() {
     }
   }, []);
 
+  // Arguments of start(user's current location) and end (pinned location)
   const fetchRoute = async (start, end) => {
+
     if (!start || !end) {
       console.log("Missing start or end coordinates:", { start, end });
       return;
@@ -39,6 +55,7 @@ export default function CebuMap() {
     
     console.log("Fetching route from:", start, "to:", end);
     
+    // Pass coordinates to OSRM API to find a route
     try {
       // Try OSRM (Open Source Routing Machine) - better road following
       const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
@@ -47,6 +64,7 @@ export default function CebuMap() {
       const response = await fetch(url);
       console.log("API Response status:", response.status);
       
+      // Check response from OSRM API and pass to Polyline if valid
       if (response.ok) {
         const data = await response.json();
         console.log("Route data received:", data);
@@ -64,8 +82,8 @@ export default function CebuMap() {
       }
     } catch (error) {
       console.error("OSRM failed, trying GraphHopper:", error);
-      
-      // Fallback to GraphHopper API
+
+      // Fallback to GraphHopper API if OSRM fails
       try {
         const graphHopperUrl = `https://graphhopper.com/api/1/route?point=${start[0]},${start[1]}&point=${end[0]},${end[1]}&vehicle=car&key=8b1a7ab7-52de-4c29-a9cc-b5d2ba3b2983`;
         console.log("GraphHopper API URL:", graphHopperUrl);
@@ -98,7 +116,8 @@ export default function CebuMap() {
     }
   };
 
-  // Simple polyline decoder for GraphHopper
+  // Simple polyline decoder for GraphHopper or OSMR 
+  // Polyline is basically the lines that make up the route
   const decodePolyline = (str, precision = 5) => {
     let index = 0, lat = 0, lng = 0, coordinates = [], shift = 0, result = 0, byte = null, latitude_change, longitude_change, factor = Math.pow(10, precision);
 
@@ -146,7 +165,8 @@ export default function CebuMap() {
     }
   };
 
-  // Function for storing data for "To location"
+  // Function for storing data for "To location"   
+
   const setToPoint = () => {
     if (destination) {
       setToLocation([destination[0], destination[1], destination[2] || "To location"]);
@@ -157,7 +177,9 @@ export default function CebuMap() {
     }
   };
 
+  // Function to show the route on the map, this only runs after OSRM or graphhopper fetches the route
   const showRoute = () => {
+
     if (fromLocation && toLocation) {
       console.log("Showing route from:", fromLocation, "to:", toLocation);
       fetchRoute([fromLocation[0], fromLocation[1]], [toLocation[0], toLocation[1]]);
@@ -166,6 +188,7 @@ export default function CebuMap() {
     }
   };
 
+// Function to hold/store the pinned location data 
 const set_route = (location) => {
   // Function to hold/store the pinned location data
   if (location) {
@@ -215,8 +238,8 @@ const set_route = (location) => {
           .catch((err) => console.error("Reverse geocode failed", err));
       },
     });
+
     
-    // This is where the visuals are
     return (
       <>
         {/* Current pin marker */}
@@ -301,6 +324,8 @@ const set_route = (location) => {
     }
   };
 
+
+  // Sets the variables to Null to clear out for the next input
   const clearRoute = () => {
     setRouteCoordinates([]);
     setFromLocation(null);
@@ -317,8 +342,9 @@ const set_route = (location) => {
 
 
 
-
+  // This is where the visuals are HTML, CSS, JS
   return ( 
+
     <div style={{ position: "relative" }}>
       <div style={{ position: "absolute", top: 60, left: 880, zIndex: 1000, background: "rgba(255,255,255,0.95)", padding: 8, borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
         <div style={{ fontWeight: 700, marginBottom: 6 }}>Route Planning</div>
@@ -367,6 +393,7 @@ const set_route = (location) => {
         )}
       </div>
 
+     {/*Route Control buttons*/}
       <div style ={{display: "flex", gap:6, color: "#fff", flexWrap: "wrap"}}> 
         <button onClick={setFromPoint} style = {{fontSize: 15, backgroundColor: "#4CAF50", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Set From </button>
         <button onClick={setToPoint} style = {{fontSize: 15, backgroundColor: "#f44336", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Set To </button>

@@ -3,9 +3,12 @@
 // using react-leaflet. It depends on browser-only globals like `navigator`
 // and `document`, so keep it client-only via the directive above.
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from "react-leaflet";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import L from "leaflet";
 
+//Get users location from this file
+// import the helper from the same folder
+import { getLocation } from "./UserLocation";
 // Next.js + Leaflet integration note:
 // Leaflet looks for marker image assets relative to its own package by
 // default. In SSR or some bundlers the paths may not resolve, leaving the
@@ -27,23 +30,68 @@ export default function CebuMap() {
   // ALL OF THESE ARE STATE VARIABLES TO STORE DATA
   // Murag siya int value = 0 sa C++
   const [userPosition, setUserPosition] = useState(null);
+  const [geoError, setGeoError] = useState(null);
+  const [userPositionAccuracy, setUserPositionAccuracy] = useState(null);
   const [destination, setDestination] = useState(null);
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [fromLocation, setFromLocation] = useState(null);
   const [toLocation, setToLocation] = useState(null);
   const [routeMode, setRouteMode] = useState(null); // 'from' or 'to'
+  // ref to the Leaflet map instance so we can programmatically change view
+  const mapRef = useRef(null);
 
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setUserPosition([pos.coords.latitude, pos.coords.longitude]);
-        },
-        (err) => console.error(err),
-        { enableHighAccuracy: true }
-      );
-    }
+    // Try to get a reasonably accurate fix (watchPosition-backed helper).
+    // We prefer accuracy <= 50m and will wait up to 10s for it.
+    getLocation(50, 10000).then((loc) => {
+      if (loc && loc.length >= 4) {
+        // loc: [lat, lng, label, accuracy]
+        setUserPosition([loc[0], loc[1]]);
+        setUserPositionAccuracy(loc[3]);
+      } else if (loc && loc.length >= 2) {
+        setUserPosition([loc[0], loc[1]]);
+        setUserPositionAccuracy(null);
+      } else {
+        setGeoError('Unable to obtain geolocation');
+      }
+    }).catch((e) => {
+      console.error('getLocation helper error', e);
+      setGeoError(String(e));
+    });
   }, []);
+
+  
+
+  
+
+  // If userPosition becomes available and the user hasn't pinned a location
+  // yet (destination is empty), auto-set the pin so the map shows the
+  // user's current location immediately.
+  useEffect(() => {
+    if (userPosition && !destination) {
+      const loc = [userPosition[0], userPosition[1], 'Current location'];
+      setDestination(loc);
+      setFromLocation(loc);
+      setRouteMode('from');
+      try {
+        const map = mapRef.current;
+        if (map && map.setView) map.setView([loc[0], loc[1]], map.getZoom() || 13);
+      } catch (e) {}
+    }
+  }, [userPosition]);
+
+  // When destination changes, move the map view to center on the new pin.
+  useEffect(() => {
+    if (!destination) return;
+    try {
+      const map = mapRef.current;
+      if (map && map.setView) {
+        map.setView([destination[0], destination[1]], map.getZoom() || 13);
+      }
+    } catch (e) {
+      // ignore if map isn't ready yet
+    }
+  }, [destination]);
 
   // Arguments of start(user's current location) and end (pinned location)
   const fetchRoute = async (start, end) => {
@@ -156,13 +204,29 @@ export default function CebuMap() {
 
   // Function for storing data for "From location"
   const setFromPoint = () => {
-    if (destination) {
-      setFromLocation([destination[0], destination[1], destination[2] || "From location"]);
+    // If we already have the user's geolocation from state, use that as From.
+    if (userPosition) {
+      // Move the active pin (destination) to the user's current location
+      setDestination([userPosition[0], userPosition[1], 'Current location']);
+      setFromLocation([userPosition[0], userPosition[1], 'Current location']);
       setRouteMode('from');
-      console.log("From location set:", destination);
-    } else {
-      console.log("Pin a location first, then click 'Set From'");
+      console.log("From location set from userPosition:", userPosition);
+      return;
     }
+
+    // Otherwise try the exported helper which returns a Promise.
+    getLocation().then((loc) => {
+      if (loc) {
+        // Also move the active pin to the obtained location so the user
+        // immediately sees the pin at their current position.
+        setDestination(loc);  
+        setFromLocation(loc);
+        setRouteMode('from');
+        console.log("From location set from getLocation():", loc);
+      } else {
+        console.log("Could not obtain user location");
+      }
+    });
   };
 
   // Function for storing data for "To location"   
@@ -188,27 +252,6 @@ export default function CebuMap() {
     }
   };
 
-// Function to hold/store the pinned location data 
-const set_route = (location) => {
-  // Function to hold/store the pinned location data
-  if (location) {
-    // If a location is provided, set it as the destination
-    setDestination(location);
-    console.log("Route destination set to:", location);
-  } else {
-    // If no location provided, return the current pinned location data
-    if (destination) {
-      return {
-        latitude: destination[0],
-        longitude: destination[1],
-        address: destination[2] || null,
-        coordinates: [destination[0], destination[1]],
-        timestamp: new Date().toISOString()
-      };
-    }
-    return null;
-  }
-}
 
 
 
@@ -278,51 +321,6 @@ const set_route = (location) => {
     );
   }
 
-// stray top-level fetch removed; reverse geocode is called when the user clicks the map
-
-
-  // Copy coordinates to clipboard
-  const copyCoords = () => {
-    if (!destination) return;
-    const text = `${destination[0]},${destination[1]}`;
-    if (navigator.clipboard) navigator.clipboard.writeText(text);
-    console.log("Copied pin coords:", text);
-  };
-
-  // Export current pin as JSON file for terminal reading
-  const exportPin = () => {
-    if (!destination) return;
-    
-    const pin = { lat: destination[0], lng: destination[1], createdAt: new Date().toISOString() };
-    const data = JSON.stringify([pin], null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "ruta-pin.json";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleSetRuta = () => {
-    console.log("Show Route button clicked");
-    console.log("Current userPosition:", userPosition);
-    console.log("Current destination:", destination);
-    
-    const routeData = set_route();
-    console.log("Route data from set_route():", routeData);
-    
-    if (routeData && userPosition) {
-      console.log("Route data ready:", routeData);
-      console.log("Calling fetchRoute with:", userPosition, [routeData.latitude, routeData.longitude]);
-      // Fetch and display the route
-      fetchRoute(userPosition, [routeData.latitude, routeData.longitude]);
-    } else if (!userPosition) {
-      console.log("User location not available for routing");
-    } else {
-      console.log("No destination pinned yet. Click on the map to pin a location first.");
-    }
-  };
 
 
   // Sets the variables to Null to clear out for the next input
@@ -334,19 +332,13 @@ const set_route = (location) => {
     console.log("Route and all route points cleared");
   };
 
-  const logPin = () => {
-    if (!destination) return;
-    console.log("Pinned at:", destination[0], destination[1]);
-  };
-
-
 
 
   // This is where the visuals are HTML, CSS, JS
   return ( 
 
     <div style={{ position: "relative" }}>
-      <div style={{ position: "absolute", top: 60, left: 880, zIndex: 1000, background: "rgba(255,255,255,0.95)", padding: 8, borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
+      <div style={{ position: "absolute", top: -90, left: 880, zIndex: 1000, background: "grey", padding: 8, borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
         <div style={{ fontWeight: 700, marginBottom: 6 }}>Route Planning</div>
         
         {/* From Location */}
@@ -395,16 +387,27 @@ const set_route = (location) => {
 
      {/*Route Control buttons*/}
       <div style ={{display: "flex", gap:6, color: "#fff", flexWrap: "wrap"}}> 
-        <button onClick={setFromPoint} style = {{fontSize: 15, backgroundColor: "#4CAF50", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Set From </button>
+        <button onClick={setFromPoint} style = {{fontSize: 15, backgroundColor: "#4CAF50", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Current Location </button>
+  
         <button onClick={setToPoint} style = {{fontSize: 15, backgroundColor: "#f44336", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Set To </button>
         <button onClick={showRoute} style = {{fontSize: 15, backgroundColor: "#2196F3", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Show Route </button>
         <button onClick={clearRoute} style = {{fontSize: 15, backgroundColor: "#666", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Clear Route </button>
+        </div>
+
+        {/* Debug panel - visible during development to help trace state */}
+        <div style={{ marginTop: 8, fontSize: 12, color: '#222' }}>
+          <div><strong>Debug</strong></div>
+          <div>UserPosition: {userPosition ? `${userPosition[0].toFixed(6)}, ${userPosition[1].toFixed(6)}` : 'null'}</div>
+          <div>Destination: {destination ? `${destination[0].toFixed(6)}, ${destination[1].toFixed(6)} (${destination[2] ?? ''})` : 'null'}</div>
+          <div>Accuracy: {userPositionAccuracy != null ? `${userPositionAccuracy} m` : 'unknown'}</div>
+          <div>GeoError: {geoError ?? 'none'}</div>
         </div>
 
       <MapContainer
         center={userPosition || [10.3157, 123.8854]} // Cebu default
         zoom={13}
         style={{ height: "80vh", width: "100%" }}
+        whenCreated={(mapInstance) => { mapRef.current = mapInstance; }}
       >
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"

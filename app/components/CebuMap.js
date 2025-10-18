@@ -39,18 +39,30 @@ export default function CebuMap() {
   const [routeMode, setRouteMode] = useState(null); // 'from' or 'to'
   // ref to the Leaflet map instance so we can programmatically change view
   const mapRef = useRef(null);
+  // Show a modal on load asking user to choose geolocation or manual selection for From
+  const [showModal, setShowModal] = useState(true);
 
   useEffect(() => {
-    // Try to get a reasonably accurate fix (watchPosition-backed helper).
-    // We prefer accuracy <= 50m and will wait up to 10s for it.
+    // Don't auto-fetch geolocation on mount — wait for the user to choose
+    // via the modal. We'll request geolocation only when they click "Use My Location".
+  }, []);
+
+  // Handler when user chooses to use geolocation for From location
+  const useGeolocation = () => {
+    setShowModal(false);
     getLocation(50, 10000).then((loc) => {
       if (loc && loc.length >= 4) {
-        // loc: [lat, lng, label, accuracy]
         setUserPosition([loc[0], loc[1]]);
         setUserPositionAccuracy(loc[3]);
+        setDestination([loc[0], loc[1], 'Current location']);
+        setFromLocation([loc[0], loc[1], 'Current location']);
+        setRouteMode('from');
       } else if (loc && loc.length >= 2) {
         setUserPosition([loc[0], loc[1]]);
         setUserPositionAccuracy(null);
+        setDestination([loc[0], loc[1], 'Current location']);
+        setFromLocation([loc[0], loc[1], 'Current location']);
+        setRouteMode('from');
       } else {
         setGeoError('Unable to obtain geolocation');
       }
@@ -58,26 +70,20 @@ export default function CebuMap() {
       console.error('getLocation helper error', e);
       setGeoError(String(e));
     });
-  }, []);
+  };
 
-  
+  // Handler when user chooses to manually select From location
+  const useManualSelection = () => {
+    setShowModal(false);
+    // User will click the map to pin a location; when they do,
+    // we'll set it as the From location via the existing logic.
+  };
 
-  
-
-  // If userPosition becomes available and the user hasn't pinned a location
-  // yet (destination is empty), auto-set the pin so the map shows the
-  // user's current location immediately.
+  // When userPosition is set (only after user chooses geolocation),
+  // we no longer auto-set destination here. The useGeolocation handler
+  // already sets destination/fromLocation, so this effect is now optional.
   useEffect(() => {
-    if (userPosition && !destination) {
-      const loc = [userPosition[0], userPosition[1], 'Current location'];
-      setDestination(loc);
-      setFromLocation(loc);
-      setRouteMode('from');
-      try {
-        const map = mapRef.current;
-        if (map && map.setView) map.setView([loc[0], loc[1]], map.getZoom() || 13);
-      } catch (e) {}
-    }
+    // Removed auto-assignment logic; moved to useGeolocation handler
   }, [userPosition]);
 
   // When destination changes, move the map view to center on the new pin.
@@ -202,31 +208,15 @@ export default function CebuMap() {
   };
 
 
-  // Function for storing data for "From location"
   const setFromPoint = () => {
-    // If we already have the user's geolocation from state, use that as From.
-    if (userPosition) {
-      // Move the active pin (destination) to the user's current location
-      setDestination([userPosition[0], userPosition[1], 'Current location']);
-      setFromLocation([userPosition[0], userPosition[1], 'Current location']);
+    // Set the From location from the current pinned destination
+    if(destination && destination[0] !== undefined && destination[1] !== undefined) { 
+      setFromLocation([destination[0], destination[1], destination[2] || "From Location"]); 
       setRouteMode('from');
-      console.log("From location set from userPosition:", userPosition);
-      return;
+      console.log("From Location set:", destination);
+    } else { 
+      console.log("Pin a location first, then click 'Set From'"); 
     }
-
-    // Otherwise try the exported helper which returns a Promise.
-    getLocation().then((loc) => {
-      if (loc) {
-        // Also move the active pin to the obtained location so the user
-        // immediately sees the pin at their current position.
-        setDestination(loc);  
-        setFromLocation(loc);
-        setRouteMode('from');
-        console.log("From location set from getLocation():", loc);
-      } else {
-        console.log("Could not obtain user location");
-      }
-    });
   };
 
   // Function for storing data for "To location"   
@@ -251,8 +241,6 @@ export default function CebuMap() {
       console.log("Please set both From and To locations first");
     }
   };
-
-
 
 
   // Pin marker on map click
@@ -286,10 +274,12 @@ export default function CebuMap() {
     return (
       <>
         {/* Current pin marker */}
-        {destination ? <Marker position={[destination[0], destination[1]]}></Marker> : null}
+        {destination && destination[0] !== undefined && destination[1] !== undefined ? (
+          <Marker position={[destination[0], destination[1]]}></Marker>
+        ) : null}
         
         {/* From location marker (green) */}
-        {fromLocation && (
+        {fromLocation && fromLocation[0] !== undefined && fromLocation[1] !== undefined && (
           <Marker 
             position={[fromLocation[0], fromLocation[1]]}
             icon={L.icon({
@@ -304,7 +294,7 @@ export default function CebuMap() {
         )}
         
         {/* To location marker (red) */}
-        {toLocation && (
+        {toLocation && toLocation[0] !== undefined && toLocation[1] !== undefined && (
           <Marker 
             position={[toLocation[0], toLocation[1]]}
             icon={L.icon({
@@ -338,13 +328,95 @@ export default function CebuMap() {
   return ( 
 
     <div style={{ position: "relative" }}>
-      <div style={{ position: "absolute", top: -90, left: 880, zIndex: 1000, background: "grey", padding: 8, borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
-        <div style={{ fontWeight: 700, marginBottom: 6 }}>Route Planning</div>
+      {/* Modal popup asking user to choose From location method */}
+      {showModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.6)',
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px'
+        }}>
+          <div style={{
+            background: '#fff',
+            padding: '24px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            maxWidth: '400px',
+            width: '100%',
+            textAlign: 'center'
+          }}>
+            <h2 style={{ marginTop: 0, marginBottom: '16px', color: '#333', fontSize: 'clamp(18px, 5vw, 24px)' }}>Set Starting Location</h2>
+            <p style={{ marginBottom: '24px', color: '#666', fontSize: 'clamp(14px, 3.5vw, 16px)' }}>
+              How would you like to set your "From" location?
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={useGeolocation}
+                style={{
+                  fontSize: 'clamp(13px, 3.5vw, 15px)',
+                  backgroundColor: '#4CAF50',
+                  border: 'none',
+                  padding: '12px 20px',
+                  borderRadius: '6px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  flex: '1 1 auto',
+                  minWidth: '140px'
+                }}
+              >
+                Use My Location
+              </button>
+              <button
+                onClick={useManualSelection}
+                style={{
+                  fontSize: 'clamp(13px, 3.5vw, 15px)',
+                  backgroundColor: '#2196F3',
+                  border: 'none',
+                  padding: '12px 20px',
+                  borderRadius: '6px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  flex: '1 1 auto',
+                  minWidth: '140px'
+                }}
+              >
+                Choose on Map
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Route Planning Info Box - responsive positioning */}
+      <div style={{ 
+        position: "absolute", 
+        top: '10px', 
+        right: '10px', 
+        zIndex: 1000, 
+        background: "rgba(128, 128, 128, 0.95)", 
+        padding: 8, 
+        borderRadius: 8, 
+        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+        maxWidth: '90vw',
+        width: 'auto',
+        maxHeight: '40vh',
+        overflowY: 'auto'
+      }}>
+        <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 'clamp(12px, 3vw, 14px)' }}>Route Planning</div>
         
         {/* From Location */}
         <div style={{ fontSize: 13, marginBottom: 8 }}>
           <div style={{ fontWeight: 700, color: "#4CAF50" }}>From:</div>
-          {fromLocation ? (
+          {fromLocation && fromLocation[0] !== undefined && fromLocation[1] !== undefined ? (
             <div style={{ color: "#333" }}>
               <div>{fromLocation[2] || "From location"}</div>
               <div style={{ fontSize: 11 }}>{fromLocation[0].toFixed(6)}, {fromLocation[1].toFixed(6)}</div>
@@ -357,7 +429,7 @@ export default function CebuMap() {
         {/* To Location */}
         <div style={{ fontSize: 13, marginBottom: 8 }}>
           <div style={{ fontWeight: 700, color: "#f44336" }}>To:</div>
-          {toLocation ? (
+          {toLocation && toLocation[0] !== undefined && toLocation[1] !== undefined ? (
             <div style={{ color: "#333" }}>
               <div>{toLocation[2] || "To location"}</div>
               <div style={{ fontSize: 11 }}>{toLocation[0].toFixed(6)}, {toLocation[1].toFixed(6)}</div>
@@ -368,7 +440,7 @@ export default function CebuMap() {
         </div>
         
         {/* Current Pin */}
-        {destination && (
+        {destination && destination[0] !== undefined && destination[1] !== undefined && (
           <div style={{ fontSize: 13, borderTop: "1px solid #eee", paddingTop: 8 }}>
             <div style={{ fontWeight: 700 }}>Current Pin:</div>
             <div style={{ color: "#333" }}>
@@ -385,28 +457,97 @@ export default function CebuMap() {
         )}
       </div>
 
-     {/*Route Control buttons*/}
-      <div style ={{display: "flex", gap:6, color: "#fff", flexWrap: "wrap"}}> 
-        <button onClick={setFromPoint} style = {{fontSize: 15, backgroundColor: "#4CAF50", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Current Location </button>
+     {/*Route Control buttons - positioned at bottom for mobile*/}
+      <div style={{
+        position: "absolute",
+        bottom: '10px',
+        left: '10px',
+        right: '10px',
+        zIndex: 1000,
+        display: "flex",
+        gap: 6,
+        color: "#fff",
+        flexWrap: "wrap",
+        justifyContent: 'center'
+      }}> 
+        <button onClick={setFromPoint} style={{
+          fontSize: 'clamp(12px, 3vw, 15px)',
+          backgroundColor: "#4CAF50",
+          border: "none",
+          padding: "8px 12px",
+          borderRadius: "4px",
+          color: "white",
+          cursor: "pointer",
+          flex: '1 1 auto',
+          minWidth: '70px',
+          maxWidth: '120px'
+        }}>Set From</button>
   
-        <button onClick={setToPoint} style = {{fontSize: 15, backgroundColor: "#f44336", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Set To </button>
-        <button onClick={showRoute} style = {{fontSize: 15, backgroundColor: "#2196F3", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Show Route </button>
-        <button onClick={clearRoute} style = {{fontSize: 15, backgroundColor: "#666", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Clear Route </button>
-        </div>
+        <button onClick={setToPoint} style={{
+          fontSize: 'clamp(12px, 3vw, 15px)',
+          backgroundColor: "#f44336",
+          border: "none",
+          padding: "8px 12px",
+          borderRadius: "4px",
+          color: "white",
+          cursor: "pointer",
+          flex: '1 1 auto',
+          minWidth: '70px',
+          maxWidth: '120px'
+        }}>Set To</button>
+        
+        <button onClick={showRoute} style={{
+          fontSize: 'clamp(12px, 3vw, 15px)',
+          backgroundColor: "#2196F3",
+          border: "none",
+          padding: "8px 12px",
+          borderRadius: "4px",
+          color: "white",
+          cursor: "pointer",
+          flex: '1 1 auto',
+          minWidth: '90px',
+          maxWidth: '140px'
+        }}>Show Route</button>
+        
+        <button onClick={clearRoute} style={{
+          fontSize: 'clamp(12px, 3vw, 15px)',
+          backgroundColor: "#666",
+          border: "none",
+          padding: "8px 12px",
+          borderRadius: "4px",
+          color: "white",
+          cursor: "pointer",
+          flex: '1 1 auto',
+          minWidth: '90px',
+          maxWidth: '140px'
+        }}>Clear Route</button>
+      </div>
 
-        {/* Debug panel - visible during development to help trace state */}
-        <div style={{ marginTop: 8, fontSize: 12, color: '#222' }}>
-          <div><strong>Debug</strong></div>
-          <div>UserPosition: {userPosition ? `${userPosition[0].toFixed(6)}, ${userPosition[1].toFixed(6)}` : 'null'}</div>
-          <div>Destination: {destination ? `${destination[0].toFixed(6)}, ${destination[1].toFixed(6)} (${destination[2] ?? ''})` : 'null'}</div>
-          <div>Accuracy: {userPositionAccuracy != null ? `${userPositionAccuracy} m` : 'unknown'}</div>
-          <div>GeoError: {geoError ?? 'none'}</div>
-        </div>
+      {/* Debug panel - positioned top left, hidden on small screens */}
+      <div style={{ 
+        position: 'absolute',
+        top: '10px',
+        left: '10px',
+        zIndex: 1000,
+        background: 'rgba(255, 255, 255, 0.9)',
+        padding: '8px',
+        borderRadius: '4px',
+        fontSize: '10px',
+        color: '#222',
+        maxWidth: '200px',
+        display: window.innerWidth < 768 ? 'none' : 'block'
+      }}>
+        <div><strong>Debug</strong></div>
+        <div style={{ fontSize: '9px' }}>UserPosition: {userPosition && userPosition[0] !== undefined && userPosition[1] !== undefined ? `${userPosition[0].toFixed(4)}, ${userPosition[1].toFixed(4)}` : 'null'}</div>
+        <div style={{ fontSize: '9px' }}>Destination: {destination && destination[0] !== undefined && destination[1] !== undefined ? `${destination[0].toFixed(4)}, ${destination[1].toFixed(4)}` : 'null'}</div>
+        <div style={{ fontSize: '9px' }}>Accuracy: {userPositionAccuracy != null ? `${userPositionAccuracy.toFixed(0)} m` : 'unknown'}</div>
+        <div style={{ fontSize: '9px' }}>GeoError: {geoError ?? 'none'}</div>
+      </div>
 
       <MapContainer
         center={userPosition || [10.3157, 123.8854]} // Cebu default
         zoom={13}
-        style={{ height: "80vh", width: "100%" }}
+        style={{ height: "100vh", width: "100%" }}
         whenCreated={(mapInstance) => { mapRef.current = mapInstance; }}
       >
         <TileLayer

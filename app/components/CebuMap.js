@@ -6,6 +6,9 @@ import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from "react-l
 import { useState, useEffect, useRef } from "react";
 import L from "leaflet";
 
+import UserLocation from "./UserLocation";
+import ManualLocationInput from "./ManualLocationInput";
+
 //Get users location from this file
 // import the helper from the same folder
 import { getLocation } from "./UserLocation";
@@ -60,9 +63,9 @@ export default function CebuMap() {
     });
   }, []);
 
-  
 
-  
+
+
 
   // If userPosition becomes available and the user hasn't pinned a location
   // yet (destination is empty), auto-set the pin so the map shows the
@@ -76,7 +79,7 @@ export default function CebuMap() {
       try {
         const map = mapRef.current;
         if (map && map.setView) map.setView([loc[0], loc[1]], map.getZoom() || 13);
-      } catch (e) {}
+      } catch (e) { }
     }
   }, [userPosition]);
 
@@ -100,23 +103,23 @@ export default function CebuMap() {
       console.log("Missing start or end coordinates:", { start, end });
       return;
     }
-    
+
     console.log("Fetching route from:", start, "to:", end);
-    
+
     // Pass coordinates to OSRM API to find a route
     try {
       // Try OSRM (Open Source Routing Machine) - better road following
       const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
       console.log("OSRM API URL:", url);
-      
+
       const response = await fetch(url);
       console.log("API Response status:", response.status);
-      
+
       // Check response from OSRM API and pass to Polyline if valid
       if (response.ok) {
         const data = await response.json();
         console.log("Route data received:", data);
-        
+
         if (data.routes && data.routes.length > 0) {
           const coordinates = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
           console.log("Setting route coordinates:", coordinates.length, "points");
@@ -135,13 +138,13 @@ export default function CebuMap() {
       try {
         const graphHopperUrl = `https://graphhopper.com/api/1/route?point=${start[0]},${start[1]}&point=${end[0]},${end[1]}&vehicle=car&key=8b1a7ab7-52de-4c29-a9cc-b5d2ba3b2983`;
         console.log("GraphHopper API URL:", graphHopperUrl);
-        
+
         const ghResponse = await fetch(graphHopperUrl);
-        
+
         if (ghResponse.ok) {
           const ghData = await ghResponse.json();
           console.log("GraphHopper data received:", ghData);
-          
+
           if (ghData.paths && ghData.paths.length > 0) {
             // Decode GraphHopper polyline
             const points = ghData.paths[0].points;
@@ -219,7 +222,7 @@ export default function CebuMap() {
       if (loc) {
         // Also move the active pin to the obtained location so the user
         // immediately sees the pin at their current position.
-        setDestination(loc);  
+        setDestination(loc);
         setFromLocation(loc);
         setRouteMode('from');
         console.log("From location set from getLocation():", loc);
@@ -227,6 +230,15 @@ export default function CebuMap() {
         console.log("Could not obtain user location");
       }
     });
+  };
+
+  //User Manual Input
+  const handleManualLocation = ([lat, lng, label]) => {
+    setDestination([lat, lng, label]);
+    setFromLocation([lat, lng, label]);
+    setRouteMode('from');
+    if (mapRef.current?.setView) mapRef.current.setView([lat, lng], 13);
+    console.log("Manual location set:", [lat, lng, label]);
   };
 
   // Function for storing data for "To location"   
@@ -261,7 +273,7 @@ export default function CebuMap() {
       click(e) {
         const lat = e.latlng.lat; // latitude
         const lng = e.latlng.lng; // longitude
-        setDestination([lat, lng]); 
+        setDestination([lat, lng]);
         // call server to reverse geocode
         fetch("/api/reverse", {
           method: "POST",
@@ -282,15 +294,15 @@ export default function CebuMap() {
       },
     });
 
-    
+
     return (
       <>
         {/* Current pin marker */}
         {destination ? <Marker position={[destination[0], destination[1]]}></Marker> : null}
-        
+
         {/* From location marker (green) */}
         {fromLocation && (
-          <Marker 
+          <Marker
             position={[fromLocation[0], fromLocation[1]]}
             icon={L.icon({
               iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -302,10 +314,10 @@ export default function CebuMap() {
             })}
           />
         )}
-        
+
         {/* To location marker (red) */}
         {toLocation && (
-          <Marker 
+          <Marker
             position={[toLocation[0], toLocation[1]]}
             icon={L.icon({
               iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -335,12 +347,19 @@ export default function CebuMap() {
 
 
   // This is where the visuals are HTML, CSS, JS
-  return ( 
+  return (
 
     <div style={{ position: "relative" }}>
       <div style={{ position: "absolute", top: -90, left: 880, zIndex: 1000, background: "grey", padding: 8, borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
         <div style={{ fontWeight: 700, marginBottom: 6 }}>Route Planning</div>
-        
+
+        {/* Manual input for coordinates or address */}
+        <ManualLocationInput onSetLocation={handleManualLocation} />
+
+        {/* Automatic geolocation button */}
+        <UserLocation onSetFrom={handleManualLocation} />
+
+
         {/* From Location */}
         <div style={{ fontSize: 13, marginBottom: 8 }}>
           <div style={{ fontWeight: 700, color: "#4CAF50" }}>From:</div>
@@ -353,7 +372,7 @@ export default function CebuMap() {
             <div style={{ color: "#666", fontSize: 11 }}>Not set</div>
           )}
         </div>
-        
+
         {/* To Location */}
         <div style={{ fontSize: 13, marginBottom: 8 }}>
           <div style={{ fontWeight: 700, color: "#f44336" }}>To:</div>
@@ -366,7 +385,7 @@ export default function CebuMap() {
             <div style={{ color: "#666", fontSize: 11 }}>Not set</div>
           )}
         </div>
-        
+
         {/* Current Pin */}
         {destination && (
           <div style={{ fontSize: 13, borderTop: "1px solid #eee", paddingTop: 8 }}>
@@ -377,7 +396,7 @@ export default function CebuMap() {
             </div>
           </div>
         )}
-        
+
         {!destination && (
           <div style={{ color: "#666", fontSize: 11, fontStyle: "italic" }}>
             Click the map to pin a location, then use buttons to set From/To points
@@ -385,23 +404,23 @@ export default function CebuMap() {
         )}
       </div>
 
-     {/*Route Control buttons*/}
-      <div style ={{display: "flex", gap:6, color: "#fff", flexWrap: "wrap"}}> 
-        <button onClick={setFromPoint} style = {{fontSize: 15, backgroundColor: "#4CAF50", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Current Location </button>
-  
-        <button onClick={setToPoint} style = {{fontSize: 15, backgroundColor: "#f44336", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Set To </button>
-        <button onClick={showRoute} style = {{fontSize: 15, backgroundColor: "#2196F3", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Show Route </button>
-        <button onClick={clearRoute} style = {{fontSize: 15, backgroundColor: "#666", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white"}}> Clear Route </button>
-        </div>
+      {/*Route Control buttons*/}
+      <div style={{ display: "flex", gap: 6, color: "#fff", flexWrap: "wrap" }}>
+        <button onClick={setFromPoint} style={{ fontSize: 15, backgroundColor: "#4CAF50", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white" }}> Current Location </button>
 
-        {/* Debug panel - visible during development to help trace state */}
-        <div style={{ marginTop: 8, fontSize: 12, color: '#222' }}>
-          <div><strong>Debug</strong></div>
-          <div>UserPosition: {userPosition ? `${userPosition[0].toFixed(6)}, ${userPosition[1].toFixed(6)}` : 'null'}</div>
-          <div>Destination: {destination ? `${destination[0].toFixed(6)}, ${destination[1].toFixed(6)} (${destination[2] ?? ''})` : 'null'}</div>
-          <div>Accuracy: {userPositionAccuracy != null ? `${userPositionAccuracy} m` : 'unknown'}</div>
-          <div>GeoError: {geoError ?? 'none'}</div>
-        </div>
+        <button onClick={setToPoint} style={{ fontSize: 15, backgroundColor: "#f44336", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white" }}> Set To </button>
+        <button onClick={showRoute} style={{ fontSize: 15, backgroundColor: "#2196F3", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white" }}> Show Route </button>
+        <button onClick={clearRoute} style={{ fontSize: 15, backgroundColor: "#666", border: "none", padding: "8px 12px", borderRadius: "4px", color: "white" }}> Clear Route </button>
+      </div>
+
+      {/* Debug panel - visible during development to help trace state */}
+      <div style={{ marginTop: 8, fontSize: 12, color: '#222' }}>
+        <div><strong>Debug</strong></div>
+        <div>UserPosition: {userPosition ? `${userPosition[0].toFixed(6)}, ${userPosition[1].toFixed(6)}` : 'null'}</div>
+        <div>Destination: {destination ? `${destination[0].toFixed(6)}, ${destination[1].toFixed(6)} (${destination[2] ?? ''})` : 'null'}</div>
+        <div>Accuracy: {userPositionAccuracy != null ? `${userPositionAccuracy} m` : 'unknown'}</div>
+        <div>GeoError: {geoError ?? 'none'}</div>
+      </div>
 
       <MapContainer
         center={userPosition || [10.3157, 123.8854]} // Cebu default
@@ -416,10 +435,10 @@ export default function CebuMap() {
         {userPosition && <Marker position={userPosition}></Marker>}
         <LocationMarker />
         {routeCoordinates.length > 0 && (
-          <Polyline 
-            positions={routeCoordinates} 
-            color="#ff6b6b" 
-            weight={4} 
+          <Polyline
+            positions={routeCoordinates}
+            color="#ff6b6b"
+            weight={4}
             opacity={0.8}
           />
         )}

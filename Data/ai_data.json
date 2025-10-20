@@ -1,0 +1,196 @@
+[
+  {
+    "route_name": "62C: Pit-os to Carbon Market",
+    "jeepney_code": "62C",
+    "key_points": [
+      "Pit-os",
+      "Talamban",
+      "Ayala Center Cebu",
+      "Carbon Market"
+    ],
+    "direction": "South-bound",
+    "coverage": "From Pit-os through Talamban and Ayala Center to Carbon Market."
+  },
+  {
+    "route_name": "44: Naga to Cebu",
+    "jeepney_code": "44",
+    "key_points": [
+      "Naga",
+      "Minglanilla",
+      "Bulacao",
+      "Cebu City"
+    ],
+    "direction": "North-bound",
+    "coverage": "From Naga City through Minglanilla and Bulacao to downtown Cebu."
+  },
+  {
+    "route_name": "43: Minglanilla to Cebu",
+    "jeepney_code": "43",
+    "key_points": [
+      "Minglanilla",
+      "Talisay",
+      "Bulacao",
+      "Cebu City"
+    ],
+    "direction": "North-bound",
+    "coverage": "From Minglanilla through Talisay and Bulacao to Cebu City center."
+  },
+  {
+    "route_name": "43: Minglanilla to Cebu - Colon (variant)",
+    "jeepney_code": "43-CLN",
+    "key_points": [
+      "Minglanilla",
+      "Talisay",
+      "Bulacao",
+      "Colon Street"
+    ],
+    "direction": "North-bound",
+    "coverage": "Minglanilla to Cebu downtown terminating/serving Colon Street (Colon variant)."
+  },
+  {
+    "route_name": "MI-02B: Marigondon to Mandaue via MEPZ Soong Maribago",
+    "jeepney_code": "MI-02B",
+    "key_points": [
+      "Marigondon",
+      "Soong",
+      "Maribago",
+      "MEPZ",
+      "Mandaue"
+    ],
+    "direction": "North-bound",
+    "coverage": "From Marigondon through Soong, Maribago, and MEPZ to Mandaue City."
+  },
+  {
+    "route_name": "07B: Banawa to Carbon",
+    "jeepney_code": "07B",
+    "key_points": [
+      "Banawa",
+      "V. Rama Avenue",
+      "Guadalupe",
+      "Carbon Market"
+    ],
+    "direction": "South-bound",
+    "coverage": "From Banawa passing through V. Rama Avenue to Carbon Market."
+  },
+  {
+    "route_name": "12G: Labangon to SM City Cebu",
+    "jeepney_code": "12G",
+    "key_points": [
+      "Labangon",
+      "N. Bacalso Avenue",
+      "Fuente Osme\u00f1a",
+      "SM City Cebu"
+    ],
+    "direction": "North-bound",
+    "coverage": "From Labangon through N. Bacalso Avenue and Fuente Osme\u00f1a to SM City Cebu."
+  },
+  {
+    "route_name": "12L: Labangon to Ayala",
+    "jeepney_code": "12L",
+    "key_points": [
+      "Labangon",
+      "N. Bacalso Avenue",
+      "Escario Street",
+      "Ayala Center"
+    ],
+    "direction": "North-bound",
+    "coverage": "From Labangon through N. Bacalso Avenue and Escario Street to Ayala Center Cebu."
+  },
+  {
+    "route_name": "NAGA-IT: Naga to I.T. Park",
+    "jeepney_code": "NAGA-IT",
+    "key_points": [
+      "Naga",
+      "Minglanilla",
+      "Bulacao",
+      "Fuente Osme\u00f1a",
+      "I.T. Park"
+    ],
+    "direction": "North-bound",
+    "coverage": "Naga route variant that goes up to I.T. Park in Cebu City."
+  },
+  {
+    "route_name": "MING-IT: Minglanilla to I.T. Park",
+    "jeepney_code": "MING-IT",
+    "key_points": [
+      "Minglanilla",
+      "Talisay",
+      "Lahug",
+      "I.T. Park"
+    ],
+    "direction": "North-bound",
+    "coverage": "Minglanilla route variant terminating at I.T. Park in Cebu City."
+  },
+  {
+    "route_name": "23G: MEPZ to A.S. Fortuna to Country Mall",
+    "jeepney_code": "23G",
+    "key_points": [
+      "MEPZ",
+      "A.S. Fortuna",
+      "Country Mall"
+    ],
+    "direction": "North-bound",
+    "coverage": "From MEPZ/Soong to A.S. Fortuna corridor and Country Mall area."
+  },
+  {
+    "route_name": "24: Consolacion to Highway Mandaue to MEPZ",
+    "jeepney_code": "24",
+    "key_points": [
+      "Consolacion",
+      "Highway Mandaue",
+      "MEPZ 1",
+      "MEPZ 2"
+    ],
+    "direction": "South-bound",
+    "coverage": "From Consolacion through Highway Mandaue to MEPZ. Includes two MEPZ zones."
+  },
+  {
+    "route_name": "25-1: Liloan to Mandaue to MEPZ 1 to Marigondon",
+    "jeepney_code": "25-1",
+    "key_points": [
+      "Liloan",
+      "Mandaue",
+      "MEPZ 1",
+      "Marigondon"
+    ],
+    "direction": "South-bound",
+    "coverage": "From Liloan through Mandaue and MEPZ 1 to Marigondon."
+  },
+  {
+    "route_name": "25-2: Liloan to Mandaue to MEPZ 2 to Marigondon",
+    "jeepney_code": "25-2",
+    "key_points": [
+      "Liloan",
+      "Mandaue",
+      "MEPZ 2",
+      "Marigondon"
+    ],
+    "direction": "South-bound",
+    "coverage": "From Liloan through Mandaue and MEPZ 2 to Marigondon."
+  },
+  {
+    "route_name": "25-3: Liloan to Mandaue to MEPZ 3 to Marigondon",
+    "jeepney_code": "25-3",
+    "key_points": [
+      "Liloan",
+      "Mandaue",
+      "MEPZ 3",
+      "Marigondon"
+    ],
+    "direction": "South-bound",
+    "coverage": "From Liloan through Mandaue and MEPZ 3 to Marigondon."
+  },
+  {
+    "route_name": "27: Danao to Cebu",
+    "jeepney_code": "27",
+    "key_points": [
+      "Danao",
+      "Liloan",
+      "Consolacion",
+      "Mandaue",
+      "Cebu City"
+    ],
+    "direction": "South-bound",
+    "coverage": "From Danao City heading south along the coastal highway to Cebu City."
+  }
+]

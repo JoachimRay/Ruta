@@ -211,9 +211,31 @@ export default function CebuMap() {
   const setFromPoint = () => {
     // Set the From location from the current pinned destination
     if(destination && destination[0] !== undefined && destination[1] !== undefined) { 
-      setFromLocation([destination[0], destination[1], destination[2] || "From Location"]); 
+      const lat = destination[0];
+      const lng = destination[1];
+      
+      // First, set the from location with existing data
+      setFromLocation([lat, lng, destination[2] || "From Location"]); 
       setRouteMode('from');
       console.log("From Location set:", destination);
+      
+      // Then fetch the address via reverse geocoding to update with proper name
+      fetch("/api/reverse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lat, lng }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.display_name) {
+            console.log("From Address:", data.display_name);
+            // Update fromLocation with the fetched address
+            setFromLocation([lat, lng, data.display_name]);
+          } else {
+            console.warn("Reverse geocode returned no display_name", data);
+          }
+        })
+        .catch((err) => console.error("Reverse geocode failed for From location", err));
     } else { 
       console.log("Pin a location first, then click 'Set From'"); 
     }
@@ -327,6 +349,8 @@ export default function CebuMap() {
   // This is where the visuals are HTML, CSS, JS
   return ( 
 
+    
+ 
     <div style={{ position: "relative" }}>
       {/* Modal popup asking user to choose From location method */}
       {showModal && (
@@ -396,68 +420,55 @@ export default function CebuMap() {
         </div>
       )}
 
-      {/* Route Planning Info Box - responsive positioning */}
-      <div style={{ 
-        position: "absolute", 
-        top: '10px', 
-        right: '10px', 
-        zIndex: 1000, 
-        background: "rgba(128, 128, 128, 0.95)", 
-        padding: 8, 
-        borderRadius: 8, 
-        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-        maxWidth: '90vw',
-        width: 'auto',
-        maxHeight: '40vh',
-        overflowY: 'auto'
-      }}>
-        <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 'clamp(12px, 3vw, 14px)' }}>Route Planning</div>
+      <div style = {{width:390, height: 200, backgroundColor: "#1C1C1C", position: "absolute", top: 0, left: "0%", zIndex: 999, borderRadius: 16}}> 
+{/*Changes*/}
         
-        {/* From Location */}
-        <div style={{ fontSize: 13, marginBottom: 8 }}>
-          <div style={{ fontWeight: 700, color: "#4CAF50" }}>From:</div>
-          {fromLocation && fromLocation[0] !== undefined && fromLocation[1] !== undefined ? (
-            <div style={{ color: "#333" }}>
-              <div>{fromLocation[2] || "From location"}</div>
-              <div style={{ fontSize: 11 }}>{fromLocation[0].toFixed(6)}, {fromLocation[1].toFixed(6)}</div>
-            </div>
-          ) : (
-            <div style={{ color: "#666", fontSize: 11 }}>Not set</div>
-          )}
-        </div>
-        
-        {/* To Location */}
-        <div style={{ fontSize: 13, marginBottom: 8 }}>
-          <div style={{ fontWeight: 700, color: "#f44336" }}>To:</div>
-          {toLocation && toLocation[0] !== undefined && toLocation[1] !== undefined ? (
-            <div style={{ color: "#333" }}>
-              <div>{toLocation[2] || "To location"}</div>
-              <div style={{ fontSize: 11 }}>{toLocation[0].toFixed(6)}, {toLocation[1].toFixed(6)}</div>
-            </div>
-          ) : (
-            <div style={{ color: "#666", fontSize: 11 }}>Not set</div>
-          )}
-        </div>
-        
-        {/* Current Pin */}
-        {destination && destination[0] !== undefined && destination[1] !== undefined && (
-          <div style={{ fontSize: 13, borderTop: "1px solid #eee", paddingTop: 8 }}>
-            <div style={{ fontWeight: 700 }}>Current Pin:</div>
-            <div style={{ color: "#333" }}>
-              <div>{destination[2] ?? "Pinned location"}</div>
-              <div style={{ fontSize: 11 }}>{destination[0].toFixed(6)}, {destination[1].toFixed(6)}</div>
-            </div>
-          </div>
-        )}
-        
-        {!destination && (
-          <div style={{ color: "#666", fontSize: 11, fontStyle: "italic" }}>
-            Click the map to pin a location, then use buttons to set From/To points
-          </div>
-        )}
-      </div>
+       {/*Button for setting From Location*/}
+        <div style ={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 50}}> 
+           <button onClick={setFromPoint} style={{
+          fontSize: 'clamp(12px, 1vw, 15px)',
+          backgroundColor: "#1c1c1c",
+          border: "none",
+          padding: "8px 12px",
+          borderRadius: "4px",
+          color: "white",
+          cursor: "pointer",
+          width: '200px',
+          height: '40px', 
+          overflow: "hidden"
+        }}>
+          {destination && destination[2] ? destination[2] : 'Set From'}
+        </button>
+          </div> 
 
+
+        
+
+        {/*Button for setting To Location*/}
+<div style ={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 10}}> 
+        <button onClick={setToPoint} style={{
+          fontSize: 'clamp(12px, 3vw, 15px)',
+          backgroundColor: "#f44336",
+          border: "none",
+          padding: "8px 12px",
+          borderRadius: "4px",
+          color: "white",
+          cursor: "pointer",
+          width: '200px',
+          height: '40px'
+        }}>
+          {toLocation && toLocation[2] ? toLocation[2] : 'Set To'}
+        </button>
+
+        </div>
+
+  </div>
+
+
+  
      {/*Route Control buttons - positioned at bottom for mobile*/}
+ 
+     <div style = {{width:390, height: 300, backgroundColor: "#1C1C1C", position: "absolute", bottom: 0, left: "0%", zIndex: 999, borderRadius: 16}}> 
       <div style={{
         position: "absolute",
         bottom: '10px',
@@ -470,31 +481,7 @@ export default function CebuMap() {
         flexWrap: "wrap",
         justifyContent: 'center'
       }}> 
-        <button onClick={setFromPoint} style={{
-          fontSize: 'clamp(12px, 3vw, 15px)',
-          backgroundColor: "#4CAF50",
-          border: "none",
-          padding: "8px 12px",
-          borderRadius: "4px",
-          color: "white",
-          cursor: "pointer",
-          flex: '1 1 auto',
-          minWidth: '70px',
-          maxWidth: '120px'
-        }}>Set From</button>
-  
-        <button onClick={setToPoint} style={{
-          fontSize: 'clamp(12px, 3vw, 15px)',
-          backgroundColor: "#f44336",
-          border: "none",
-          padding: "8px 12px",
-          borderRadius: "4px",
-          color: "white",
-          cursor: "pointer",
-          flex: '1 1 auto',
-          minWidth: '70px',
-          maxWidth: '120px'
-        }}>Set To</button>
+       
         
         <button onClick={showRoute} style={{
           fontSize: 'clamp(12px, 3vw, 15px)',
@@ -522,6 +509,8 @@ export default function CebuMap() {
           maxWidth: '140px'
         }}>Clear Route</button>
       </div>
+     </div>
+      
 
       {/* Debug panel - positioned top left, hidden on small screens */}
       <div style={{ 

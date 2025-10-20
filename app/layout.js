@@ -14,6 +14,8 @@ export const metadata = {
 };
 
 
+
+// Compatibility phone 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">  

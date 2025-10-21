@@ -23,7 +23,7 @@ L.Icon.Default.mergeOptions({
 
 // Main map component: handles geolocation, click-to-pin (reverse geocode),
 // and route drawing. The component keeps lightweight local state and relies
-// on a small server endpoint (/api/reverse) to convert coordinates into
+// on a small server endpoint (/api/Routes) to convert coordinates into
 // human-readable addresses.
 export default function CebuMap() {
 
@@ -220,7 +220,7 @@ export default function CebuMap() {
       console.log("From Location set:", destination);
       
       // Then fetch the address via reverse geocoding to update with proper name
-      fetch("/api/reverse", {
+      fetch("/api/Routes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lat, lng }),
@@ -273,7 +273,7 @@ export default function CebuMap() {
         const lng = e.latlng.lng; // longitude
         setDestination([lat, lng]); 
         // call server to reverse geocode
-        fetch("/api/reverse", {
+        fetch("/api/Routes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ lat, lng }),
@@ -439,7 +439,7 @@ export default function CebuMap() {
         }}>
           {destination && destination[2] ? destination[2] : 'Set From'}
         </button>
-          </div> 
+        </div> 
 
 
         

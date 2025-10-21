@@ -1,7 +1,14 @@
 // Simple Next.js App Router POST handler that proxies reverse geocoding to Nominatim
+
+import {NextResponse} from "next/server"; 
+import {fileContents} from "../../../utils/Get_Data.ts"; 
+import { Get_Prompts } from "../../../utils/Get_Data.ts";
+
 const CACHE = new Map();
 const USER_AGENT = "RutaApp/1.0 (joachim@example.com)"; // replace with your contact
 
+
+// -----------------GeoCode Decoder--------------- 
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -38,4 +45,59 @@ export async function POST(req) {
   } catch (err) {
     return new Response(JSON.stringify({ error: String(err) }), { status: 500 });
   }
+}
+
+
+
+// -----------------------AI Wrapper------------------------
+
+
+export async function POST(req) 
+{
+
+  try{ 
+  const {query} = await req.json(); 
+  const prompt = Get_Prompts("route_prompt");
+
+
+
+  const completion = await openai.chat.completions.create({
+    mode: 'gpt-4o',
+    messages: [
+      { 
+        role: 'system',
+        content: prompt
+      }, 
+      {
+        role: 'user', 
+        content: query// Get the users location query 
+      }
+    ]
+  })
+
+
+
+  // Checks if response has any results 
+  const response = completion.choices[0]?.message?.content 
+
+  console.log("Generated Response: ", response ? "Success":"Failed"); 
+
+  if(response) 
+  {
+    console.log("Raw AI output preview: ", response.substring(0,200) + '...'); 
+  }
+
+
+
+  
+
+// Catches error if no response is generated
+  } catch(error){ 
+    console.error("API Error:", error)
+    return NextResponse.json( 
+      {error: 'Internal Server Error', details: error instanceof Error ? error.message : "Unknown Error"},
+      {status: 500}
+    )
+  }
+
 }

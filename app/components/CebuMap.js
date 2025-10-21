@@ -34,9 +34,17 @@ export default function CebuMap() {
   const [userPositionAccuracy, setUserPositionAccuracy] = useState(null);
   const [destination, setDestination] = useState(null);
   const [routeCoordinates, setRouteCoordinates] = useState([]);
+
+  // Stores the decoded coordinates of the pinned position
   const [fromLocation, setFromLocation] = useState(null);
   const [toLocation, setToLocation] = useState(null);
   const [routeMode, setRouteMode] = useState(null); // 'from' or 'to'
+  
+  // AI route suggestions
+  const [aiSuggestion, setAiSuggestion] = useState(null);
+  const [loadingAI, setLoadingAI] = useState(false);
+  const [aiError, setAiError] = useState(null);
+  
   // ref to the Leaflet map instance so we can programmatically change view
   const mapRef = useRef(null);
   // Show a modal on load asking user to choose geolocation or manual selection for From
@@ -253,6 +261,39 @@ export default function CebuMap() {
     }
   };
 
+  // Function to get AI jeepney route suggestions
+  const getAISuggestion = async () => {
+    if (!fromLocation || !toLocation) {
+      setAiError("Please set both From and To locations first");
+      return;
+    }
+
+    setLoadingAI(true);
+    setAiError(null);
+    
+    try {
+      const response = await fetch("/api/Routes/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fromLocation, toLocation }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setAiSuggestion(data.suggestion);
+        console.log("AI Suggestion:", data.suggestion);
+      } else {
+        setAiError(data.error || "Failed to get suggestion");
+      }
+    } catch (error) {
+      console.error("Error getting AI suggestion:", error);
+      setAiError("Failed to get route suggestion");
+    } finally {
+      setLoadingAI(false);
+    }
+  };
+
   // Function to show the route on the map, this only runs after OSRM or graphhopper fetches the route
   const showRoute = () => {
 
@@ -352,6 +393,10 @@ export default function CebuMap() {
     
  
     <div style={{ position: "relative" }}>
+      {/* Hide any Leaflet zoom controls as a hard override (in case a plugin or default control slips through) */}
+      <style jsx global>{`
+        .leaflet-control-zoom { display: none !important; }
+      `}</style>
       {/* Modal popup asking user to choose From location method */}
       {showModal && (
         <div style={{
@@ -420,22 +465,42 @@ export default function CebuMap() {
         </div>
       )}
 
+
+
+
+
+
+
+
+
       <div style = {{width:390, height: 200, backgroundColor: "#1C1C1C", position: "absolute", top: 0, left: "0%", zIndex: 999, borderRadius: 16}}> 
-{/*Changes*/}
+
         
        {/*Button for setting From Location*/}
-        <div style ={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 50}}> 
+
+       <div style = {{
+        color: "white",
+        fontSize: '15px',
+        paddingTop:"20px",
+        paddingLeft: "50px",
+        
+       }}> 
+
+       From: 
+       </div>
+        <div style ={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 50}}>
            <button onClick={setFromPoint} style={{
           fontSize: 'clamp(12px, 1vw, 15px)',
           backgroundColor: "#1c1c1c",
           border: "none",
           padding: "8px 12px",
           borderRadius: "4px",
-          color: "white",
           cursor: "pointer",
           width: '200px',
           height: '40px', 
-          overflow: "hidden"
+          overflow: "hidden",
+          color: "yellow",
+          font: "bold"
         }}>
           {destination && destination[2] ? destination[2] : 'Set From'}
         </button>
@@ -461,6 +526,79 @@ export default function CebuMap() {
         </button>
 
         </div>
+
+        {/*AI Suggestion Button*/}
+        <div style={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 10}}> 
+        <button 
+          onClick={getAISuggestion} 
+          disabled={!fromLocation || !toLocation || loadingAI}
+          style={{
+            fontSize: 'clamp(12px, 1vw, 15px)',
+            backgroundColor: loadingAI ? "#999" : "#FF9800",
+            border: "none",
+            padding: "8px 12px",
+            borderRadius: "4px",
+            color: "white",
+            cursor: loadingAI || !fromLocation || !toLocation ? "not-allowed" : "pointer",
+            width: '200px',
+            height: '40px',
+            opacity: !fromLocation || !toLocation ? 0.5 : 1
+          }}>
+          {loadingAI ? 'Getting Suggestion...' : '🚍 Suggest Jeepney Route'}
+        </button>
+        </div>
+
+        {/* AI Suggestion Display */}
+        {aiSuggestion && (
+          <div style={{
+            padding: 20,
+            backgroundColor: '#FFF3E0',
+            borderRadius: 8,
+            margin: '10px 20px',
+            border: '2px solid #FF9800'
+          }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#E65100' }}>🚍 Jeepney Route Suggestion</h3>
+            <p style={{ margin: '5px 0', fontWeight: 'bold', color: '#333' }}>
+              {aiSuggestion.route_summary}
+            </p>
+            {aiSuggestion.steps && aiSuggestion.steps.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <strong>Steps:</strong>
+                {aiSuggestion.steps.map((step, index) => (
+                  <div key={index} style={{ 
+                    marginTop: 8, 
+                    padding: 8, 
+                    backgroundColor: 'white', 
+                    borderRadius: 4,
+                    fontSize: 14
+                  }}>
+                    <div><strong>Jeepney:</strong> {step.jeepney}</div>
+                    <div><strong>From:</strong> {step.from}</div>
+                    <div><strong>To:</strong> {step.to}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {aiSuggestion.alternative_routes && aiSuggestion.alternative_routes.length > 0 && (
+              <div style={{ marginTop: 10, fontSize: 13, color: '#666' }}>
+                <strong>Alternative:</strong> {aiSuggestion.alternative_routes[0].jeepney} from {aiSuggestion.alternative_routes[0].from}
+              </div>
+            )}
+          </div>
+        )}
+
+        {aiError && (
+          <div style={{
+            padding: 15,
+            backgroundColor: '#FFEBEE',
+            borderRadius: 8,
+            margin: '10px 20px',
+            color: '#C62828',
+            fontSize: 14
+          }}>
+            ⚠️ {aiError}
+          </div>
+        )}
 
   </div>
 
@@ -510,28 +648,7 @@ export default function CebuMap() {
         }}>Clear Route</button>
       </div>
      </div>
-      
-
-      {/* Debug panel - positioned top left, hidden on small screens */}
-      <div style={{ 
-        position: 'absolute',
-        top: '10px',
-        left: '10px',
-        zIndex: 1000,
-        background: 'rgba(255, 255, 255, 0.9)',
-        padding: '8px',
-        borderRadius: '4px',
-        fontSize: '10px',
-        color: '#222',
-        maxWidth: '200px',
-        display: window.innerWidth < 768 ? 'none' : 'block'
-      }}>
-        <div><strong>Debug</strong></div>
-        <div style={{ fontSize: '9px' }}>UserPosition: {userPosition && userPosition[0] !== undefined && userPosition[1] !== undefined ? `${userPosition[0].toFixed(4)}, ${userPosition[1].toFixed(4)}` : 'null'}</div>
-        <div style={{ fontSize: '9px' }}>Destination: {destination && destination[0] !== undefined && destination[1] !== undefined ? `${destination[0].toFixed(4)}, ${destination[1].toFixed(4)}` : 'null'}</div>
-        <div style={{ fontSize: '9px' }}>Accuracy: {userPositionAccuracy != null ? `${userPositionAccuracy.toFixed(0)} m` : 'unknown'}</div>
-        <div style={{ fontSize: '9px' }}>GeoError: {geoError ?? 'none'}</div>
-      </div>
+    
 
       <MapContainer
         center={userPosition || [10.3157, 123.8854]} // Cebu default

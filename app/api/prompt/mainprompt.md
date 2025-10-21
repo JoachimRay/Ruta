@@ -13,9 +13,8 @@ Your goal is to:
 ### Tools and Data
 - 🗺️ **Mapping Engine:** Leaflet (for rendering Cebu map and user pins)
 - 🚏 **Routing Engine:** OSRM (primary) and GraphHopper (backup)
-- 🧩 **Jeepney Route Data:** Located at  
-  `(insert your file path or database reference here)`  
-  Each route entry includes jeepney code, stop coordinates, and path data.
+- 🧩 **Jeepney Route Data:** Available at `../../../Data/ai_data.json`  
+  Contains 16 jeepney routes with: route_name, jeepney_code, key_points (array), direction, and coverage description.
 
 ---
 
@@ -91,3 +90,5 @@ Destination_Location: 10.3126, 123.9181
   ]
 }
 ```
+
+

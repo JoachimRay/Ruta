@@ -1,10 +1,8 @@
-
-
-
 [
   {
     "route_name": "62C: Pit-os to Carbon Market",
     "jeepney_code": "62C",
+    "operator": "6 BROS and 1 SIS",
     "key_points": [
       "Pit-os",
       "Talamban",
@@ -17,6 +15,7 @@
   {
     "route_name": "44: Naga to Cebu",
     "jeepney_code": "44",
+    "operator": "ACTROS Corporation",
     "key_points": [
       "Naga",
       "Minglanilla",
@@ -29,6 +28,7 @@
   {
     "route_name": "43: Minglanilla to Cebu",
     "jeepney_code": "43",
+    "operator": "ACTROS Corporation",
     "key_points": [
       "Minglanilla",
       "Talisay",
@@ -41,6 +41,7 @@
   {
     "route_name": "43: Minglanilla to Cebu - Colon (variant)",
     "jeepney_code": "43-CLN",
+    "operator": "ACTROS Corporation",
     "key_points": [
       "Minglanilla",
       "Talisay",
@@ -53,6 +54,7 @@
   {
     "route_name": "MI-02B: Marigondon to Mandaue via MEPZ Soong Maribago",
     "jeepney_code": "MI-02B",
+    "operator": "AMISTAD AND TIU",
     "key_points": [
       "Marigondon",
       "Soong",
@@ -66,6 +68,7 @@
   {
     "route_name": "07B: Banawa to Carbon",
     "jeepney_code": "07B",
+    "operator": "BANTRASCO",
     "key_points": [
       "Banawa",
       "V. Rama Avenue",
@@ -78,18 +81,20 @@
   {
     "route_name": "12G: Labangon to SM City Cebu",
     "jeepney_code": "12G",
+    "operator": "BANTRASCO",
     "key_points": [
       "Labangon",
       "N. Bacalso Avenue",
-      "Fuente Osme\u00f1a",
+      "Fuente Osmeña",
       "SM City Cebu"
     ],
     "direction": "North-bound",
-    "coverage": "From Labangon through N. Bacalso Avenue and Fuente Osme\u00f1a to SM City Cebu."
+    "coverage": "From Labangon through N. Bacalso Avenue and Fuente Osmeña to SM City Cebu."
   },
   {
     "route_name": "12L: Labangon to Ayala",
     "jeepney_code": "12L",
+    "operator": "BANTRASCO",
     "key_points": [
       "Labangon",
       "N. Bacalso Avenue",
@@ -102,11 +107,12 @@
   {
     "route_name": "NAGA-IT: Naga to I.T. Park",
     "jeepney_code": "NAGA-IT",
+    "operator": "BANTRASCO",
     "key_points": [
       "Naga",
       "Minglanilla",
       "Bulacao",
-      "Fuente Osme\u00f1a",
+      "Fuente Osmeña",
       "I.T. Park"
     ],
     "direction": "North-bound",
@@ -115,6 +121,7 @@
   {
     "route_name": "MING-IT: Minglanilla to I.T. Park",
     "jeepney_code": "MING-IT",
+    "operator": "BANTRASCO",
     "key_points": [
       "Minglanilla",
       "Talisay",
@@ -127,6 +134,7 @@
   {
     "route_name": "23G: MEPZ to A.S. Fortuna to Country Mall",
     "jeepney_code": "23G",
+    "operator": "CMLDOT COOP",
     "key_points": [
       "MEPZ",
       "A.S. Fortuna",
@@ -138,6 +146,7 @@
   {
     "route_name": "24: Consolacion to Highway Mandaue to MEPZ",
     "jeepney_code": "24",
+    "operator": "CMLDOT COOP",
     "key_points": [
       "Consolacion",
       "Highway Mandaue",
@@ -150,6 +159,7 @@
   {
     "route_name": "25-1: Liloan to Mandaue to MEPZ 1 to Marigondon",
     "jeepney_code": "25-1",
+    "operator": "CMLDOT COOP",
     "key_points": [
       "Liloan",
       "Mandaue",
@@ -162,6 +172,7 @@
   {
     "route_name": "25-2: Liloan to Mandaue to MEPZ 2 to Marigondon",
     "jeepney_code": "25-2",
+    "operator": "CMLDOT COOP",
     "key_points": [
       "Liloan",
       "Mandaue",
@@ -174,6 +185,7 @@
   {
     "route_name": "25-3: Liloan to Mandaue to MEPZ 3 to Marigondon",
     "jeepney_code": "25-3",
+    "operator": "CMLDOT COOP",
     "key_points": [
       "Liloan",
       "Mandaue",
@@ -186,6 +198,7 @@
   {
     "route_name": "27: Danao to Cebu",
     "jeepney_code": "27",
+    "operator": "CADCO TRANS MPC",
     "key_points": [
       "Danao",
       "Liloan",

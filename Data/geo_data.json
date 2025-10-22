@@ -4,6 +4,7 @@
     "properties": {
       "route_name": "62C: Pit-os to Carbon Market",
       "jeepney_code": "62C",
+      "operator": "6 BROS and 1 SIS",
       "description": "From Pit-os through Talamban and Ayala Center to Carbon Market.",
       "stops": [
         "Pit-os",
@@ -15,22 +16,10 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.920639,
-          10.399452
-        ],
-        [
-          123.916902,
-          10.369329
-        ],
-        [
-          123.90523,
-          10.318237
-        ],
-        [
-          123.899131,
-          10.291439
-        ]
+        [123.920639, 10.399452],
+        [123.916902, 10.369329],
+        [123.90523, 10.318237],
+        [123.899131, 10.291439]
       ]
     }
   },
@@ -39,6 +28,7 @@
     "properties": {
       "route_name": "44: Naga to Cebu",
       "jeepney_code": "44",
+      "operator": "ACTROS Corporation",
       "description": "From Naga City through Minglanilla and Bulacao to downtown Cebu.",
       "stops": [
         "Naga",
@@ -50,22 +40,10 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.7575,
-          10.2093
-        ],
-        [
-          123.7961,
-          10.2563
-        ],
-        [
-          123.8738,
-          10.2837
-        ],
-        [
-          123.8985,
-          10.315
-        ]
+        [123.7575, 10.2093],
+        [123.7961, 10.2563],
+        [123.8738, 10.2837],
+        [123.8985, 10.315]
       ]
     }
   },
@@ -74,6 +52,7 @@
     "properties": {
       "route_name": "43: Minglanilla to Cebu",
       "jeepney_code": "43",
+      "operator": "ACTROS Corporation",
       "description": "From Minglanilla through Talisay and Bulacao to Cebu City center.",
       "stops": [
         "Minglanilla",
@@ -85,22 +64,10 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.7961,
-          10.2563
-        ],
-        [
-          123.839,
-          10.2677
-        ],
-        [
-          123.8738,
-          10.2837
-        ],
-        [
-          123.8985,
-          10.315
-        ]
+        [123.7961, 10.2563],
+        [123.839, 10.2677],
+        [123.8738, 10.2837],
+        [123.8985, 10.315]
       ]
     }
   },
@@ -109,6 +76,7 @@
     "properties": {
       "route_name": "43: Minglanilla to Cebu - Colon (variant)",
       "jeepney_code": "43-CLN",
+      "operator": "ACTROS Corporation",
       "description": "Minglanilla to Cebu downtown terminating/serving Colon Street (Colon variant).",
       "stops": [
         "Minglanilla",
@@ -120,22 +88,10 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.7961,
-          10.2563
-        ],
-        [
-          123.839,
-          10.2677
-        ],
-        [
-          123.8738,
-          10.2837
-        ],
-        [
-          123.896,
-          10.295
-        ]
+        [123.7961, 10.2563],
+        [123.839, 10.2677],
+        [123.8738, 10.2837],
+        [123.896, 10.295]
       ]
     }
   },
@@ -144,6 +100,7 @@
     "properties": {
       "route_name": "MI-02B: Marigondon to Mandaue via MEPZ Soong Maribago",
       "jeepney_code": "MI-02B",
+      "operator": "AMISTAD AND TIU",
       "description": "From Marigondon through Soong, Maribago, and MEPZ to Mandaue City.",
       "stops": [
         "Marigondon",
@@ -156,26 +113,11 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.9691,
-          10.2763
-        ],
-        [
-          123.9633,
-          10.3088
-        ],
-        [
-          123.9599,
-          10.3179
-        ],
-        [
-          123.9551,
-          10.3312
-        ],
-        [
-          123.9408,
-          10.3415
-        ]
+        [123.9691, 10.2763],
+        [123.9633, 10.3088],
+        [123.9599, 10.3179],
+        [123.9551, 10.3312],
+        [123.9408, 10.3415]
       ]
     }
   },
@@ -184,6 +126,7 @@
     "properties": {
       "route_name": "07B: Banawa to Carbon",
       "jeepney_code": "07B",
+      "operator": "BANTRASCO",
       "description": "From Banawa passing through V. Rama Avenue to Carbon Market.",
       "stops": [
         "Banawa",
@@ -195,22 +138,10 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.8862,
-          10.3198
-        ],
-        [
-          123.8901,
-          10.3129
-        ],
-        [
-          123.8937,
-          10.3081
-        ],
-        [
-          123.8991,
-          10.2914
-        ]
+        [123.8862, 10.3198],
+        [123.8901, 10.3129],
+        [123.8937, 10.3081],
+        [123.8991, 10.2914]
       ]
     }
   },
@@ -219,33 +150,22 @@
     "properties": {
       "route_name": "12G: Labangon to SM City Cebu",
       "jeepney_code": "12G",
-      "description": "From Labangon through N. Bacalso Avenue and Fuente Osme\u00f1a to SM City Cebu.",
+      "operator": "BANTRASCO",
+      "description": "From Labangon through N. Bacalso Avenue and Fuente Osmeña to SM City Cebu.",
       "stops": [
         "Labangon",
         "N. Bacalso Avenue",
-        "Fuente Osme\u00f1a",
+        "Fuente Osmeña",
         "SM City Cebu"
       ]
     },
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.885,
-          10.295
-        ],
-        [
-          123.89,
-          10.302
-        ],
-        [
-          123.8945,
-          10.312
-        ],
-        [
-          123.9168,
-          10.3113
-        ]
+        [123.885, 10.295],
+        [123.89, 10.302],
+        [123.8945, 10.312],
+        [123.9168, 10.3113]
       ]
     }
   },
@@ -254,6 +174,7 @@
     "properties": {
       "route_name": "12L: Labangon to Ayala",
       "jeepney_code": "12L",
+      "operator": "BANTRASCO",
       "description": "From Labangon through N. Bacalso Avenue and Escario Street to Ayala Center Cebu.",
       "stops": [
         "Labangon",
@@ -265,62 +186,36 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.885,
-          10.295
-        ],
-        [
-          123.89,
-          10.302
-        ],
-        [
-          123.8951,
-          10.315
-        ],
-        [
-          123.9122,
-          10.3175
-        ]
+        [123.885, 10.295],
+        [123.89, 10.302],
+        [123.8951, 10.315],
+        [123.9122, 10.3175]
       ]
     }
   },
-    {
+  {
     "type": "Feature",
     "properties": {
       "route_name": "NAGA-IT: Naga to I.T. Park",
       "jeepney_code": "NAGA-IT",
+      "operator": "BANTRASCO",
       "description": "Naga route variant that goes up to I.T. Park in Cebu City.",
       "stops": [
         "Naga",
         "Minglanilla",
         "Bulacao",
-        "Fuente Osme\u00f1a",
+        "Fuente Osmeña",
         "I.T. Park"
       ]
     },
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.7575,
-          10.2093
-        ],
-        [
-          123.7961,
-          10.2563
-        ],
-        [
-          123.8738,
-          10.2837
-        ],
-        [
-          123.8945,
-          10.312
-        ],
-        [
-          123.9059,
-          10.3275
-        ]
+        [123.7575, 10.2093],
+        [123.7961, 10.2563],
+        [123.8738, 10.2837],
+        [123.8945, 10.312],
+        [123.9059, 10.3275]
       ]
     }
   },
@@ -329,6 +224,7 @@
     "properties": {
       "route_name": "MING-IT: Minglanilla to I.T. Park",
       "jeepney_code": "MING-IT",
+      "operator": "BANTRASCO",
       "description": "Minglanilla route variant terminating at I.T. Park in Cebu City.",
       "stops": [
         "Minglanilla",
@@ -340,22 +236,10 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.7961,
-          10.2563
-        ],
-        [
-          123.839,
-          10.2677
-        ],
-        [
-          123.9025,
-          10.3248
-        ],
-        [
-          123.9059,
-          10.3275
-        ]
+        [123.7961, 10.2563],
+        [123.839, 10.2677],
+        [123.9025, 10.3248],
+        [123.9059, 10.3275]
       ]
     }
   },
@@ -364,6 +248,7 @@
     "properties": {
       "route_name": "23G: MEPZ to A.S. Fortuna to Country Mall",
       "jeepney_code": "23G",
+      "operator": "CMLDOT COOP",
       "description": "From MEPZ/Soong to A.S. Fortuna corridor and Country Mall area.",
       "stops": [
         "MEPZ",
@@ -374,18 +259,9 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.9551,
-          10.3312
-        ],
-        [
-          123.954,
-          10.334
-        ],
-        [
-          123.95,
-          10.338
-        ]
+        [123.9551, 10.3312],
+        [123.954, 10.334],
+        [123.95, 10.338]
       ]
     }
   },
@@ -394,6 +270,7 @@
     "properties": {
       "route_name": "24: Consolacion to Highway Mandaue to MEPZ",
       "jeepney_code": "24",
+      "operator": "CMLDOT COOP",
       "description": "From Consolacion through Highway Mandaue to MEPZ. Includes two MEPZ zones.",
       "stops": [
         "Consolacion",
@@ -405,22 +282,10 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.9615,
-          10.3737
-        ],
-        [
-          123.9408,
-          10.3415
-        ],
-        [
-          123.9551,
-          10.3312
-        ],
-        [
-          123.952,
-          10.328
-        ]
+        [123.9615, 10.3737],
+        [123.9408, 10.3415],
+        [123.9551, 10.3312],
+        [123.952, 10.328]
       ]
     }
   },
@@ -429,6 +294,7 @@
     "properties": {
       "route_name": "25-1: Liloan to Mandaue to MEPZ 1 to Marigondon",
       "jeepney_code": "25-1",
+      "operator": "CMLDOT COOP",
       "description": "From Liloan through Mandaue and MEPZ 1 to Marigondon.",
       "stops": [
         "Liloan",
@@ -440,22 +306,10 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.9953,
-          10.3975
-        ],
-        [
-          123.9408,
-          10.3415
-        ],
-        [
-          123.9551,
-          10.3312
-        ],
-        [
-          123.9691,
-          10.2763
-        ]
+        [123.9953, 10.3975],
+        [123.9408, 10.3415],
+        [123.9551, 10.3312],
+        [123.9691, 10.2763]
       ]
     }
   },
@@ -464,6 +318,7 @@
     "properties": {
       "route_name": "25-2: Liloan to Mandaue to MEPZ 2 to Marigondon",
       "jeepney_code": "25-2",
+      "operator": "CMLDOT COOP",
       "description": "From Liloan through Mandaue and MEPZ 2 to Marigondon.",
       "stops": [
         "Liloan",
@@ -475,22 +330,10 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.9953,
-          10.3975
-        ],
-        [
-          123.9408,
-          10.3415
-        ],
-        [
-          123.952,
-          10.328
-        ],
-        [
-          123.9691,
-          10.2763
-        ]
+        [123.9953, 10.3975],
+        [123.9408, 10.3415],
+        [123.952, 10.328],
+        [123.9691, 10.2763]
       ]
     }
   },
@@ -499,6 +342,7 @@
     "properties": {
       "route_name": "25-3: Liloan to Mandaue to MEPZ 3 to Marigondon",
       "jeepney_code": "25-3",
+      "operator": "CMLDOT COOP",
       "description": "From Liloan through Mandaue and MEPZ 3 to Marigondon.",
       "stops": [
         "Liloan",
@@ -510,22 +354,10 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          123.9953,
-          10.3975
-        ],
-        [
-          123.9408,
-          10.3415
-        ],
-        [
-          123.9495,
-          10.3251
-        ],
-        [
-          123.9691,
-          10.2763
-        ]
+        [123.9953, 10.3975],
+        [123.9408, 10.3415],
+        [123.9495, 10.3251],
+        [123.9691, 10.2763]
       ]
     }
   },
@@ -534,6 +366,7 @@
     "properties": {
       "route_name": "27: Danao to Cebu",
       "jeepney_code": "27",
+      "operator": "CADCO TRANS MPC",
       "description": "From Danao City heading south along the coastal highway to Cebu City.",
       "stops": [
         "Danao",
@@ -546,26 +379,11 @@
     "geometry": {
       "type": "LineString",
       "coordinates": [
-        [
-          124.0253,
-          10.5265
-        ],
-        [
-          123.9953,
-          10.3975
-        ],
-        [
-          123.9615,
-          10.3737
-        ],
-        [
-          123.9408,
-          10.3415
-        ],
-        [
-          123.8985,
-          10.315
-        ]
+        [124.0253, 10.5265],
+        [123.9953, 10.3975],
+        [123.9615, 10.3737],
+        [123.9408, 10.3415],
+        [123.8985, 10.315]
       ]
     }
   }

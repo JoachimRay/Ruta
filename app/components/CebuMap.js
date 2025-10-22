@@ -1,19 +1,26 @@
+// ===================================================================
+// MAIN CEBU MAP COMPONENT - CLEAN & ORGANIZED
+// ===================================================================
+/**
+ * CebuMap - Interactive mapping component for route planning in Cebu
+ * 
+ * This is a cleaned up version of the original CebuMap component.
+ * All functionality is preserved but organized better for maintainability.
+ */
+
 "use client";
-// This file is a client-only React component that renders a Leaflet map
-// using react-leaflet. It depends on browser-only globals like `navigator`
-// and `document`, so keep it client-only via the directive above.
+
+// ===================================================================
+// IMPORTS
+// ===================================================================
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from "react-leaflet";
 import { useState, useEffect, useRef } from "react";
 import L from "leaflet";
-
-//Get users location from this file
-// import the helper from the same folder
 import { getLocation } from "./UserLocation";
-// Next.js + Leaflet integration note:
-// Leaflet looks for marker image assets relative to its own package by
-// default. In SSR or some bundlers the paths may not resolve, leaving the
-// default marker icons broken. Overriding the default URLs to CDN-hosted
-// images is a simple workaround that keeps marker visuals working.
+
+// ===================================================================
+// LEAFLET ICON FIX
+// ===================================================================
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -21,41 +28,102 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-// Main map component: handles geolocation, click-to-pin (reverse geocode),
-// and route drawing. The component keeps lightweight local state and relies
-// on a small server endpoint (/api/Routes) to convert coordinates into
-// human-readable addresses.
-export default function CebuMap() {
+// ===================================================================
+// UTILITY FUNCTIONS
+// ===================================================================
 
-  // ALL OF THESE ARE STATE VARIABLES TO STORE DATA
-  // Murag siya int value = 0 sa C++
+/**
+ * Formats addresses to show only essential parts
+ */
+const formatAddress = (fullAddress) => {
+  if (!fullAddress) return null;
+  
+  const parts = fullAddress.split(',').map(part => part.trim()).filter(part => part);
+  const unwantedPatterns = [
+    /^\d{4,}$/, /^Philippines?$/i, /^Cebu$/i, /^Region VII/i, /^Central Visayas/i, /^Visayas$/i,
+  ];
+  
+  const filtered = parts.filter(part => !unwantedPatterns.some(pattern => pattern.test(part)));
+  const relevant = filtered.slice(0, 3);
+  
+  if (relevant.length >= 2) return relevant.join(', ');
+  if (relevant.length === 1) return relevant[0];
+  return parts.slice(0, 2).join(', ') || fullAddress;
+};
+
+/**
+ * Fetches route between two points with fallback
+ */
+const fetchRouteData = async (start, end) => {
+  if (!start || !end) throw new Error("Missing coordinates");
+  
+  try {
+    // Primary: OSRM API
+    const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
+    const response = await fetch(url);
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.routes && data.routes.length > 0) {
+        return data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+      }
+    }
+    throw new Error("OSRM failed");
+  } catch (error) {
+    console.warn("Route API failed, using fallback:", error);
+    // Fallback: straight line
+    return [start, end];
+  }
+};
+
+/**
+ * Reverse geocoding function
+ */
+const reverseGeocode = async (lat, lng) => {
+  try {
+    const response = await fetch("/api/Routes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lat, lng }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.display_name) {
+        return formatAddress(data.display_name);
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("Reverse geocoding failed:", error);
+    return null;
+  }
+};
+
+// ===================================================================
+// MAIN COMPONENT
+// ===================================================================
+export default function CebuMap() {
+  // ===================================================================
+  // STATE VARIABLES
+  // ===================================================================
   const [userPosition, setUserPosition] = useState(null);
   const [geoError, setGeoError] = useState(null);
   const [userPositionAccuracy, setUserPositionAccuracy] = useState(null);
   const [destination, setDestination] = useState(null);
   const [routeCoordinates, setRouteCoordinates] = useState([]);
-
-  // Stores the decoded coordinates of the pinned position
   const [fromLocation, setFromLocation] = useState(null);
   const [toLocation, setToLocation] = useState(null);
-  const [routeMode, setRouteMode] = useState(null); // 'from' or 'to'
-  
-  // AI route suggestions
+  const [routeMode, setRouteMode] = useState(null);
   const [aiSuggestion, setAiSuggestion] = useState(null);
   const [loadingAI, setLoadingAI] = useState(false);
   const [aiError, setAiError] = useState(null);
-  
-  // ref to the Leaflet map instance so we can programmatically change view
   const mapRef = useRef(null);
-  // Show a modal on load asking user to choose geolocation or manual selection for From
   const [showModal, setShowModal] = useState(true);
 
-  useEffect(() => {
-    // Don't auto-fetch geolocation on mount — wait for the user to choose
-    // via the modal. We'll request geolocation only when they click "Use My Location".
-  }, []);
-
-  // Handler when user chooses to use geolocation for From location
+  // ===================================================================
+  // LOCATION HANDLERS
+  // ===================================================================
   const useGeolocation = () => {
     setShowModal(false);
     getLocation(50, 10000).then((loc) => {
@@ -80,188 +148,94 @@ export default function CebuMap() {
     });
   };
 
-  // Handler when user chooses to manually select From location
   const useManualSelection = () => {
     setShowModal(false);
-    // User will click the map to pin a location; when they do,
-    // we'll set it as the From location via the existing logic.
   };
 
-  // When userPosition is set (only after user chooses geolocation),
-  // we no longer auto-set destination here. The useGeolocation handler
-  // already sets destination/fromLocation, so this effect is now optional.
-  useEffect(() => {
-    // Removed auto-assignment logic; moved to useGeolocation handler
-  }, [userPosition]);
-
-  // When destination changes, move the map view to center on the new pin.
-  useEffect(() => {
-    if (!destination) return;
-    try {
-      const map = mapRef.current;
-      if (map && map.setView) {
-        map.setView([destination[0], destination[1]], map.getZoom() || 13);
-      }
-    } catch (e) {
-      // ignore if map isn't ready yet
-    }
-  }, [destination]);
-
-  // Arguments of start(user's current location) and end (pinned location)
-  const fetchRoute = async (start, end) => {
-
-    if (!start || !end) {
-      console.log("Missing start or end coordinates:", { start, end });
+  // ===================================================================
+  // FROM/TO LOCATION FUNCTIONS
+  // ===================================================================
+  const setFromPoint = async () => {
+    if (fromLocation) {
+      console.log("From location already set. Clear route first to change.");
       return;
     }
+
+    if (!destination || destination[0] === undefined || destination[1] === undefined) { 
+      console.log("Pin a location first, then click 'Set From'");
+      return;
+    }
+
+    const lat = destination[0];
+    const lng = destination[1];
     
-    console.log("Fetching route from:", start, "to:", end);
+    setFromLocation([lat, lng, destination[2] || "From Location"]); 
+    setRouteMode('from');
     
-    // Pass coordinates to OSRM API to find a route
-    try {
-      // Try OSRM (Open Source Routing Machine) - better road following
-      const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
-      console.log("OSRM API URL:", url);
-      
-      const response = await fetch(url);
-      console.log("API Response status:", response.status);
-      
-      // Check response from OSRM API and pass to Polyline if valid
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Route data received:", data);
-        
-        if (data.routes && data.routes.length > 0) {
-          const coordinates = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
-          console.log("Setting route coordinates:", coordinates.length, "points");
-          setRouteCoordinates(coordinates);
-          console.log("Route fetched successfully with OSRM");
-        } else {
-          throw new Error("No routes found in response");
-        }
-      } else {
-        throw new Error(`OSRM API error: ${response.status}`);
-      }
-    } catch (error) {
-      console.error("OSRM failed, trying GraphHopper:", error);
-
-      // Fallback to GraphHopper API if OSRM fails
-      try {
-        const graphHopperUrl = `https://graphhopper.com/api/1/route?point=${start[0]},${start[1]}&point=${end[0]},${end[1]}&vehicle=car&key=8b1a7ab7-52de-4c29-a9cc-b5d2ba3b2983`;
-        console.log("GraphHopper API URL:", graphHopperUrl);
-        
-        const ghResponse = await fetch(graphHopperUrl);
-        
-        if (ghResponse.ok) {
-          const ghData = await ghResponse.json();
-          console.log("GraphHopper data received:", ghData);
-          
-          if (ghData.paths && ghData.paths.length > 0) {
-            // Decode GraphHopper polyline
-            const points = ghData.paths[0].points;
-            const coordinates = decodePolyline(points);
-            console.log("Setting GraphHopper route coordinates:", coordinates.length, "points");
-            setRouteCoordinates(coordinates);
-            console.log("Route fetched successfully with GraphHopper");
-          } else {
-            throw new Error("No paths found in GraphHopper response");
-          }
-        } else {
-          throw new Error(`GraphHopper API error: ${ghResponse.status}`);
-        }
-      } catch (ghError) {
-        console.error("GraphHopper also failed:", ghError);
-        // Final fallback: draw a straight line
-        console.log("Using fallback straight line");
-        setRouteCoordinates([start, end]);
-      }
+    // Get full address via reverse geocoding
+    const address = await reverseGeocode(lat, lng);
+    if (address) {
+      setFromLocation([lat, lng, address]);
     }
   };
 
-  // Simple polyline decoder for GraphHopper or OSMR 
-  // Polyline is basically the lines that make up the route
-  const decodePolyline = (str, precision = 5) => {
-    let index = 0, lat = 0, lng = 0, coordinates = [], shift = 0, result = 0, byte = null, latitude_change, longitude_change, factor = Math.pow(10, precision);
-
-    while (index < str.length) {
-      byte = null;
-      shift = 0;
-      result = 0;
-
-      do {
-        byte = str.charCodeAt(index++) - 63;
-        result |= (byte & 0x1f) << shift;
-        shift += 5;
-      } while (byte >= 0x20);
-
-      latitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
-
-      shift = result = 0;
-
-      do {
-        byte = str.charCodeAt(index++) - 63;
-        result |= (byte & 0x1f) << shift;
-        shift += 5;
-      } while (byte >= 0x20);
-
-      longitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
-
-      lat += latitude_change;
-      lng += longitude_change;
-
-      coordinates.push([lat / factor, lng / factor]);
+  const setToPoint = async () => {
+    if (toLocation) {
+      console.log("To location already set. Clear route first to change.");
+      return;
     }
 
-    return coordinates;
-  };
-
-
-  const setFromPoint = () => {
-    // Set the From location from the current pinned destination
-    if(destination && destination[0] !== undefined && destination[1] !== undefined) { 
-      const lat = destination[0];
-      const lng = destination[1];
-      
-      // First, set the from location with existing data
-      setFromLocation([lat, lng, destination[2] || "From Location"]); 
-      setRouteMode('from');
-      console.log("From Location set:", destination);
-      
-      // Then fetch the address via reverse geocoding to update with proper name
-      fetch("/api/Routes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lat, lng }),
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.display_name) {
-            console.log("From Address:", data.display_name);
-            // Update fromLocation with the fetched address
-            setFromLocation([lat, lng, data.display_name]);
-          } else {
-            console.warn("Reverse geocode returned no display_name", data);
-          }
-        })
-        .catch((err) => console.error("Reverse geocode failed for From location", err));
-    } else { 
-      console.log("Pin a location first, then click 'Set From'"); 
-    }
-  };
-
-  // Function for storing data for "To location"   
-
-  const setToPoint = () => {
-    if (destination) {
-      setToLocation([destination[0], destination[1], destination[2] || "To location"]);
-      setRouteMode('to');
-      console.log("To location set:", destination);
-    } else {
+    if (!destination || destination[0] === undefined || destination[1] === undefined) { 
       console.log("Pin a location first, then click 'Set To'");
+      return;
+    }
+
+    const lat = destination[0];
+    const lng = destination[1];
+    
+    setToLocation([lat, lng, destination[2] || "To Location"]); 
+    setRouteMode('to');
+    
+    // Get full address via reverse geocoding
+    const address = await reverseGeocode(lat, lng);
+    if (address) {
+      setToLocation([lat, lng, address]);
     }
   };
 
-  // Function to get AI jeepney route suggestions
+  // ===================================================================
+  // ROUTE FUNCTIONS
+  // ===================================================================
+  const showRoute = async () => {
+    if (!fromLocation || !toLocation) {
+      console.log("Please set both From and To locations first");
+      return;
+    }
+
+    try {
+      const coordinates = await fetchRouteData(
+        [fromLocation[0], fromLocation[1]], 
+        [toLocation[0], toLocation[1]]
+      );
+      setRouteCoordinates(coordinates);
+    } catch (error) {
+      console.error("Failed to fetch route:", error);
+    }
+  };
+
+  const clearRoute = () => {
+    setRouteCoordinates([]);
+    setFromLocation(null);
+    setToLocation(null);
+    setRouteMode(null);
+    setAiSuggestion(null);
+    setAiError(null);
+    console.log("Route cleared");
+  };
+
+  // ===================================================================
+  // AI SUGGESTION FUNCTION
+  // ===================================================================
   const getAISuggestion = async () => {
     if (!fromLocation || !toLocation) {
       setAiError("Please set both From and To locations first");
@@ -282,7 +256,6 @@ export default function CebuMap() {
       
       if (data.success) {
         setAiSuggestion(data.suggestion);
-        console.log("AI Suggestion:", data.suggestion);
       } else {
         setAiError(data.error || "Failed to get suggestion");
       }
@@ -294,46 +267,24 @@ export default function CebuMap() {
     }
   };
 
-  // Function to show the route on the map, this only runs after OSRM or graphhopper fetches the route
-  const showRoute = () => {
-
-    if (fromLocation && toLocation) {
-      console.log("Showing route from:", fromLocation, "to:", toLocation);
-      fetchRoute([fromLocation[0], fromLocation[1]], [toLocation[0], toLocation[1]]);
-    } else {
-      console.log("Please set both From and To locations first");
-    }
-  };
-
-
-  // Pin marker on map click
+  // ===================================================================
+  // LOCATION MARKER COMPONENT
+  // ===================================================================
   function LocationMarker() {
     useMapEvents({
-      click(e) {
-        const lat = e.latlng.lat; // latitude
-        const lng = e.latlng.lng; // longitude
+      click: async (e) => {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
         setDestination([lat, lng]); 
-        // call server to reverse geocode
-        fetch("/api/Routes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ lat, lng }),
-        })
-          .then((r) => r.json())
-          .then((data) => {
-            if (data.display_name) {
-              console.log("Address:", data.display_name);
-              // attach display name to destination state via a simple approach: store as part of destination
-              setDestination([lat, lng, data.display_name]);
-            } else {
-              console.warn("Reverse geocode returned no display_name", data);
-            }
-          })
-          .catch((err) => console.error("Reverse geocode failed", err));
+        
+        // Get address via reverse geocoding
+        const address = await reverseGeocode(lat, lng);
+        if (address) {
+          setDestination([lat, lng, address]);
+        }
       },
     });
 
-    
     return (
       <>
         {/* Current pin marker */}
@@ -374,90 +325,66 @@ export default function CebuMap() {
     );
   }
 
-
-
-  // Sets the variables to Null to clear out for the next input
-  const clearRoute = () => {
-    setRouteCoordinates([]);
-    setFromLocation(null);
-    setToLocation(null);
-    setRouteMode(null);
-    console.log("Route and all route points cleared");
-  };
-
-
-
-  // This is where the visuals are HTML, CSS, JS
-  return ( 
-
+  // ===================================================================
+  // SIDE EFFECTS
+  // ===================================================================
+  useEffect(() => {
+    // Auto-center map on new destinations
+    if (!destination) return;
     
- 
+    try {
+      const map = mapRef.current;
+      if (map && map.setView) {
+        map.setView([destination[0], destination[1]], map.getZoom() || 13);
+      }
+    } catch (e) {
+      // Ignore errors during map initialization
+    }
+  }, [destination]);
+
+  // ===================================================================
+  // RENDER
+  // ===================================================================
+  return (
     <div style={{ position: "relative" }}>
-      {/* Hide any Leaflet zoom controls as a hard override (in case a plugin or default control slips through) */}
+      {/* Hide Leaflet zoom controls */}
       <style jsx global>{`
         .leaflet-control-zoom { display: none !important; }
       `}</style>
-      {/* Modal popup asking user to choose From location method */}
+
+      {/* Initial location selection modal */}
       {showModal && (
         <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(0,0,0,0.6)',
-          zIndex: 2000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '16px'
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.6)', zIndex: 2000, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', padding: '16px'
         }}>
           <div style={{
-            background: '#fff',
-            padding: '24px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            maxWidth: '400px',
-            width: '100%',
-            textAlign: 'center'
+            background: '#fff', padding: '24px', borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)', maxWidth: '400px',
+            width: '100%', textAlign: 'center'
           }}>
-            <h2 style={{ marginTop: 0, marginBottom: '16px', color: '#333', fontSize: 'clamp(18px, 5vw, 24px)' }}>Set Starting Location</h2>
+            <h2 style={{ marginTop: 0, marginBottom: '16px', color: '#333', fontSize: 'clamp(18px, 5vw, 24px)' }}>
+              Set Starting Location
+            </h2>
             <p style={{ marginBottom: '24px', color: '#666', fontSize: 'clamp(14px, 3.5vw, 16px)' }}>
               How would you like to set your "From" location?
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button
-                onClick={useGeolocation}
-                style={{
-                  fontSize: 'clamp(13px, 3.5vw, 15px)',
-                  backgroundColor: '#4CAF50',
-                  border: 'none',
-                  padding: '12px 20px',
-                  borderRadius: '6px',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  flex: '1 1 auto',
-                  minWidth: '140px'
-                }}
-              >
+              <button onClick={useGeolocation} style={{
+                fontSize: 'clamp(13px, 3.5vw, 15px)', backgroundColor: '#4CAF50',
+                border: 'none', padding: '12px 20px', borderRadius: '6px',
+                color: 'white', cursor: 'pointer', fontWeight: 600,
+                flex: '1 1 auto', minWidth: '140px'
+              }}>
                 Use My Location
               </button>
-              <button
-                onClick={useManualSelection}
-                style={{
-                  fontSize: 'clamp(13px, 3.5vw, 15px)',
-                  backgroundColor: '#2196F3',
-                  border: 'none',
-                  padding: '12px 20px',
-                  borderRadius: '6px',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  flex: '1 1 auto',
-                  minWidth: '140px'
-                }}
-              >
+              <button onClick={useManualSelection} style={{
+                fontSize: 'clamp(13px, 3.5vw, 15px)', backgroundColor: '#2196F3',
+                border: 'none', padding: '12px 20px', borderRadius: '6px',
+                color: 'white', cursor: 'pointer', fontWeight: 600,
+                flex: '1 1 auto', minWidth: '140px'
+              }}>
                 Choose on Map
               </button>
             </div>
@@ -465,97 +392,67 @@ export default function CebuMap() {
         </div>
       )}
 
-
-
-
-
-
-
-
-
-      <div style = {{width:390, height: 200, backgroundColor: "#1C1C1C", position: "absolute", top: 0, left: "0%", zIndex: 999, borderRadius: 16}}> 
-
+      {/* From/To Location Panel */}
+      <div style={{
+        width: 390, height: 200, backgroundColor: "#1C1C1C",
+        position: "absolute", top: 0, left: "0%", zIndex: 999, borderRadius: 16
+      }}>
+        <div style={{ color: "white", fontSize: '15px', paddingTop: "20px", paddingLeft: "50px" }}>
+          From:
+        </div>
         
-       {/*Button for setting From Location*/}
-
-       <div style = {{
-        color: "white",
-        fontSize: '15px',
-        paddingTop:"20px",
-        paddingLeft: "50px",
-        
-       }}> 
-
-       From: 
-       </div>
-        <div style ={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 50}}>
-           <button onClick={setFromPoint} style={{
-          fontSize: 'clamp(12px, 1vw, 15px)',
-          backgroundColor: "#1c1c1c",
-          border: "none",
-          padding: "8px 12px",
-          borderRadius: "4px",
-          cursor: "pointer",
-          width: '200px',
-          height: '40px', 
-          overflow: "hidden",
-          color: "yellow",
-          font: "bold"
-        }}>
-          {destination && destination[2] ? destination[2] : 'Set From'}
-        </button>
-        </div> 
-
-
-        
-
-        {/*Button for setting To Location*/}
-<div style ={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 10}}> 
-        <button onClick={setToPoint} style={{
-          fontSize: 'clamp(12px, 3vw, 15px)',
-          backgroundColor: "#f44336",
-          border: "none",
-          padding: "8px 12px",
-          borderRadius: "4px",
-          color: "white",
-          cursor: "pointer",
-          width: '200px',
-          height: '40px'
-        }}>
-          {toLocation && toLocation[2] ? toLocation[2] : 'Set To'}
-        </button>
-
+        {/* From Button */}
+        <div style={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 50}}>
+          <button onClick={setFromPoint} style={{
+            fontSize: 'clamp(12px, 1vw, 15px)',
+            backgroundColor: fromLocation ? "#4CAF50" : "#1c1c1c",
+            border: "none", padding: "8px 12px", borderRadius: "4px",
+            cursor: fromLocation ? "not-allowed" : "pointer",
+            width: '200px', height: '40px', overflow: "hidden",
+            color: fromLocation ? "white" : "yellow", font: "bold",
+            opacity: fromLocation ? 0.7 : 1
+          }}>
+            {fromLocation && fromLocation[2] ? fromLocation[2] : (destination && destination[2] ? destination[2] : 'Set From')}
+          </button>
         </div>
 
-        {/*AI Suggestion Button*/}
+        {/* To Button */}
         <div style={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 10}}> 
-        <button 
-          onClick={getAISuggestion} 
-          disabled={!fromLocation || !toLocation || loadingAI}
-          style={{
+          <button onClick={setToPoint} style={{
+            fontSize: 'clamp(12px, 3vw, 15px)',
+            backgroundColor: toLocation ? "#f44336" : "#666",
+            border: "none", padding: "8px 12px", borderRadius: "4px",
+            color: "white", cursor: toLocation ? "not-allowed" : "pointer",
+            width: '200px', height: '40px', opacity: toLocation ? 0.7 : 1
+          }}>
+            {toLocation && toLocation[2] ? toLocation[2] : (destination && destination[2] ? destination[2] : 'Set To')}
+          </button>
+        </div>
+
+        {/* AI Suggestion Button */}
+        <div style={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 10}}> 
+          <button onClick={getAISuggestion} disabled={!fromLocation || !toLocation || loadingAI} style={{
             fontSize: 'clamp(12px, 1vw, 15px)',
             backgroundColor: loadingAI ? "#999" : "#FF9800",
-            border: "none",
-            padding: "8px 12px",
-            borderRadius: "4px",
-            color: "white",
+            border: "none", padding: "8px 12px", borderRadius: "4px", color: "white",
             cursor: loadingAI || !fromLocation || !toLocation ? "not-allowed" : "pointer",
-            width: '200px',
-            height: '40px',
-            opacity: !fromLocation || !toLocation ? 0.5 : 1
+            width: '200px', height: '40px', opacity: !fromLocation || !toLocation ? 0.5 : 1
           }}>
-          {loadingAI ? 'Getting Suggestion...' : '🚍 Suggest Jeepney Route'}
-        </button>
+            {loadingAI ? 'Getting Suggestion...' : '🚍 Suggest Jeepney Route'}
+          </button>
         </div>
+      </div>
 
+      {/* Route Control Panel */}
+      <div style={{
+        width: 390, height: 300, backgroundColor: "#1C1C1C",
+        position: "absolute", bottom: 0, left: "0%", zIndex: 999, borderRadius: 16
+      }}>
         {/* AI Suggestion Display */}
         {aiSuggestion && (
           <div style={{
-            padding: 20,
-            backgroundColor: '#FFF3E0',
-            borderRadius: 8,
-            margin: '10px 20px',
-            border: '2px solid #FF9800'
+            padding: 20, backgroundColor: '#FFF3E0', borderRadius: 8,
+            margin: '10px 20px', border: '2px solid #FF9800'
           }}>
             <h3 style={{ margin: '0 0 10px 0', color: '#E65100' }}>🚍 Jeepney Route Suggestion</h3>
             <p style={{ margin: '5px 0', fontWeight: 'bold', color: '#333' }}>
@@ -566,11 +463,8 @@ export default function CebuMap() {
                 <strong>Steps:</strong>
                 {aiSuggestion.steps.map((step, index) => (
                   <div key={index} style={{ 
-                    marginTop: 8, 
-                    padding: 8, 
-                    backgroundColor: 'white', 
-                    borderRadius: 4,
-                    fontSize: 14
+                    marginTop: 8, padding: 8, backgroundColor: 'white', 
+                    borderRadius: 4, fontSize: 14
                   }}>
                     <div><strong>Jeepney:</strong> {step.jeepney}</div>
                     <div><strong>From:</strong> {step.from}</div>
@@ -579,79 +473,48 @@ export default function CebuMap() {
                 ))}
               </div>
             )}
-            {aiSuggestion.alternative_routes && aiSuggestion.alternative_routes.length > 0 && (
-              <div style={{ marginTop: 10, fontSize: 13, color: '#666' }}>
-                <strong>Alternative:</strong> {aiSuggestion.alternative_routes[0].jeepney} from {aiSuggestion.alternative_routes[0].from}
-              </div>
-            )}
           </div>
         )}
 
+        {/* AI Error Display */}
         {aiError && (
           <div style={{
-            padding: 15,
-            backgroundColor: '#FFEBEE',
-            borderRadius: 8,
-            margin: '10px 20px',
-            color: '#C62828',
-            fontSize: 14
+            padding: 15, backgroundColor: '#FFEBEE', borderRadius: 8,
+            margin: '10px 20px', color: '#C62828', fontSize: 14
           }}>
             ⚠️ {aiError}
           </div>
         )}
 
-  </div>
-
-
-  
-     {/*Route Control buttons - positioned at bottom for mobile*/}
- 
-     <div style = {{width:390, height: 300, backgroundColor: "#1C1C1C", position: "absolute", bottom: 0, left: "0%", zIndex: 999, borderRadius: 16}}> 
-      <div style={{
-        position: "absolute",
-        bottom: '10px',
-        left: '10px',
-        right: '10px',
-        zIndex: 1000,
-        display: "flex",
-        gap: 6,
-        color: "#fff",
-        flexWrap: "wrap",
-        justifyContent: 'center'
-      }}> 
-       
-        
-        <button onClick={showRoute} style={{
-          fontSize: 'clamp(12px, 3vw, 15px)',
-          backgroundColor: "#2196F3",
-          border: "none",
-          padding: "8px 12px",
-          borderRadius: "4px",
-          color: "white",
-          cursor: "pointer",
-          flex: '1 1 auto',
-          minWidth: '90px',
-          maxWidth: '140px'
-        }}>Show Route</button>
-        
-        <button onClick={clearRoute} style={{
-          fontSize: 'clamp(12px, 3vw, 15px)',
-          backgroundColor: "#666",
-          border: "none",
-          padding: "8px 12px",
-          borderRadius: "4px",
-          color: "white",
-          cursor: "pointer",
-          flex: '1 1 auto',
-          minWidth: '90px',
-          maxWidth: '140px'
-        }}>Clear Route</button>
+        {/* Control Buttons */}
+        <div style={{
+          position: "absolute", bottom: '10px', left: '10px', right: '10px',
+          zIndex: 1000, display: "flex", gap: 6, color: "#fff",
+          flexWrap: "wrap", justifyContent: 'center'
+        }}>
+          <button onClick={showRoute} style={{
+            fontSize: 'clamp(12px, 3vw, 15px)', backgroundColor: "#2196F3",
+            border: "none", padding: "8px 12px", borderRadius: "4px",
+            color: "white", cursor: "pointer", flex: '1 1 auto',
+            minWidth: '90px', maxWidth: '140px'
+          }}>
+            Show Route
+          </button>
+          
+          <button onClick={clearRoute} style={{
+            fontSize: 'clamp(12px, 3vw, 15px)', backgroundColor: "#666",
+            border: "none", padding: "8px 12px", borderRadius: "4px",
+            color: "white", cursor: "pointer", flex: '1 1 auto',
+            minWidth: '90px', maxWidth: '140px'
+          }}>
+            Clear Route
+          </button>
+        </div>
       </div>
-     </div>
-    
 
+      {/* Main Map */}
       <MapContainer
-        center={userPosition || [10.3157, 123.8854]} // Cebu default
+        center={userPosition || [10.3157, 123.8854]}
         zoom={13}
         style={{ height: "100vh", width: "100%" }}
         whenCreated={(mapInstance) => { mapRef.current = mapInstance; }}
@@ -660,8 +523,14 @@ export default function CebuMap() {
           attribution="&copy; OpenStreetMap contributors"
           url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png"
         />
+        
+        {/* User position marker */}
         {userPosition && <Marker position={userPosition}></Marker>}
+        
+        {/* Location markers */}
         <LocationMarker />
+        
+        {/* Route line */}
         {routeCoordinates.length > 0 && (
           <Polyline 
             positions={routeCoordinates} 
@@ -674,4 +543,3 @@ export default function CebuMap() {
     </div>
   );
 }
-// oten

@@ -158,54 +158,56 @@ export default function CebuMap() {
   // FROM/TO LOCATION FUNCTIONS
   // ===================================================================
   const setFromPoint = async () => {
+    // If FROM is already locked, clear it and reset to original state
     if (fromLocation) {
-      console.log("From location already set. Clear route first to change.");
+      setFromLocation(null);
+      setDestination(null);
+      console.log("FROM CLEARED - button reset to original state");
       return;
     }
 
-    // If already targeting FROM and have destination, LOCK IT
-    if (targetingMode === 'from' && destination) {
+    // If we have a pin placed, lock it as FROM location
+    if (destination) {
       const lat = destination[0];
       const lng = destination[1];
       const address = destination[2] || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
       
       setFromLocation([lat, lng, address]); 
       setRouteMode('from');
-      setTargetingMode(null); // Stop targeting
       console.log("FROM LOCKED");
       return;
     }
 
-    // START targeting FROM - now ONLY FROM button will update
-    setTargetingMode('from');
-    console.log("TARGETING FROM - now move pin to see ONLY FROM button update");
+    // If no pin and no FROM location, clear destination to show pin
+    setDestination(null);
+    console.log("Click map to set FROM location");
   };
 
   const setToPoint = async () => {
+    // If TO is already locked, clear it and reset to original state
     if (toLocation) {
-      console.log("To location already set. Clear route first to change.");
+      setToLocation(null);
+      setDestination(null);
+      console.log("TO CLEARED - button reset to original state");
       return;
     }
 
-    // If already targeting TO and have destination, LOCK IT
-    if (targetingMode === 'to' && destination) {
+    // If we have a pin placed, lock it as TO location
+    if (destination) {
       const lat = destination[0];
       const lng = destination[1];
       const address = destination[2] || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
       
       setToLocation([lat, lng, address]); 
       setRouteMode('to');
-      setTargetingMode(null); // Stop targeting
       console.log("TO LOCKED");
       return;
     }
 
-    // START targeting TO - now ONLY TO button will update
-    setTargetingMode('to');
-    console.log("TARGETING TO - now move pin to see ONLY TO button update");
-  };
-
-  // ===================================================================
+    // If no pin and no TO location, clear destination to show pin
+    setDestination(null);
+    console.log("Click map to set TO location");
+  };  // ===================================================================
   // ROUTE FUNCTIONS
   // ===================================================================
   const showRoute = async () => {
@@ -300,8 +302,9 @@ export default function CebuMap() {
 
     return (
       <>
-        {/* Current pin marker */}
-        {destination && destination[0] !== undefined && destination[1] !== undefined ? (
+        {/* Current pin marker - only show when actively setting a location */}
+        {destination && destination[0] !== undefined && destination[1] !== undefined && 
+         (!fromLocation || !toLocation) ? (
           <Marker position={[destination[0], destination[1]]}></Marker>
         ) : null}
         

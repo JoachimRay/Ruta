@@ -120,6 +120,8 @@ export default function CebuMap() {
   const [aiError, setAiError] = useState(null);
   const mapRef = useRef(null);
   const [showModal, setShowModal] = useState(true);
+  const [targetingMode, setTargetingMode] = useState(null); // 'from', 'to', or null - which button is being set
+  const [forceRender, setForceRender] = useState(0); // Force re-render counter
 
   // ===================================================================
   // LOCATION HANDLERS
@@ -161,22 +163,22 @@ export default function CebuMap() {
       return;
     }
 
-    if (!destination || destination[0] === undefined || destination[1] === undefined) { 
-      console.log("Pin a location first, then click 'Set From'");
+    // If already in targeting mode and we have destination, CONFIRM and LOCK the location
+    if (targetingMode === 'from' && destination && destination[0] !== undefined && destination[1] !== undefined) {
+      const lat = destination[0];
+      const lng = destination[1];
+      const address = destination[2] || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      
+      setFromLocation([lat, lng, address]); 
+      setRouteMode('from');
+      setTargetingMode(null); // EXIT targeting mode - button will stop updating
+      console.log("From location LOCKED:", address);
       return;
     }
 
-    const lat = destination[0];
-    const lng = destination[1];
-    
-    setFromLocation([lat, lng, destination[2] || "From Location"]); 
-    setRouteMode('from');
-    
-    // Get full address via reverse geocoding
-    const address = await reverseGeocode(lat, lng);
-    if (address) {
-      setFromLocation([lat, lng, address]);
-    }
+    // ENTER targeting mode - now button will update as you move pin
+    setTargetingMode('from');
+    console.log("ENTERED targeting mode for 'from' - now move pin around to see button update");
   };
 
   const setToPoint = async () => {
@@ -185,22 +187,22 @@ export default function CebuMap() {
       return;
     }
 
-    if (!destination || destination[0] === undefined || destination[1] === undefined) { 
-      console.log("Pin a location first, then click 'Set To'");
+    // If already in targeting mode and we have destination, CONFIRM and LOCK the location
+    if (targetingMode === 'to' && destination && destination[0] !== undefined && destination[1] !== undefined) {
+      const lat = destination[0];
+      const lng = destination[1];
+      const address = destination[2] || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      
+      setToLocation([lat, lng, address]); 
+      setRouteMode('to');
+      setTargetingMode(null); // EXIT targeting mode - button will stop updating
+      console.log("To location LOCKED:", address);
       return;
     }
 
-    const lat = destination[0];
-    const lng = destination[1];
-    
-    setToLocation([lat, lng, destination[2] || "To Location"]); 
-    setRouteMode('to');
-    
-    // Get full address via reverse geocoding
-    const address = await reverseGeocode(lat, lng);
-    if (address) {
-      setToLocation([lat, lng, address]);
-    }
+    // ENTER targeting mode - now button will update as you move pin
+    setTargetingMode('to');
+    console.log("ENTERED targeting mode for 'to' - now move pin around to see button update");
   };
 
   // ===================================================================
@@ -228,6 +230,7 @@ export default function CebuMap() {
     setFromLocation(null);
     setToLocation(null);
     setRouteMode(null);
+    setTargetingMode(null);
     setAiSuggestion(null);
     setAiError(null);
     console.log("Route cleared");
@@ -275,13 +278,26 @@ export default function CebuMap() {
       click: async (e) => {
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
-        setDestination([lat, lng]); 
+        
+        // Set destination with loading state first (no coordinates shown)
+        setDestination([lat, lng, null]); // null means loading
+        setForceRender(prev => prev + 1); // Force component re-render
+        console.log('Map clicked - loading address for:', [lat, lng]);
         
         // Get address via reverse geocoding
         const address = await reverseGeocode(lat, lng);
         if (address) {
           setDestination([lat, lng, address]);
+          console.log('Address loaded:', address);
+        } else {
+          // Fallback to coordinates only if address completely fails
+          setDestination([lat, lng, `${lat.toFixed(4)}, ${lng.toFixed(4)}`]);
+          console.log('Address failed, using coordinates');
         }
+        setForceRender(prev => prev + 1); // Force component re-render
+        
+        // NOTE: We don't automatically set the location here anymore
+        // The user needs to click the button again to confirm the location
       },
     });
 
@@ -412,7 +428,16 @@ export default function CebuMap() {
             color: fromLocation ? "white" : "yellow", font: "bold",
             opacity: fromLocation ? 0.7 : 1
           }}>
-            {fromLocation && fromLocation[2] ? fromLocation[2] : (destination && destination[2] ? destination[2] : 'Set From')}
+            {(() => {
+              if (fromLocation && fromLocation[2]) {
+                return fromLocation[2];
+              }
+              if (targetingMode === 'from' && destination) {
+                // Show loading if address is null, otherwise show address
+                return destination[2] || 'Loading...';
+              }
+              return 'Set From';
+            })()}
           </button>
         </div>
 
@@ -425,7 +450,16 @@ export default function CebuMap() {
             color: "white", cursor: toLocation ? "not-allowed" : "pointer",
             width: '200px', height: '40px', opacity: toLocation ? 0.7 : 1
           }}>
-            {toLocation && toLocation[2] ? toLocation[2] : (destination && destination[2] ? destination[2] : 'Set To')}
+            {(() => {
+              if (toLocation && toLocation[2]) {
+                return toLocation[2];
+              }
+              if (targetingMode === 'to' && destination) {
+                // Show loading if address is null, otherwise show address
+                return destination[2] || 'Loading...';
+              }
+              return 'Set To';
+            })()}
           </button>
         </div>
 

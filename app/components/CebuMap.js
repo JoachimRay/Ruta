@@ -120,6 +120,8 @@ export default function CebuMap() {
   const [aiError, setAiError] = useState(null);
   const mapRef = useRef(null);
   const [showModal, setShowModal] = useState(true);
+  const [targetingMode, setTargetingMode] = useState(null); // 'from', 'to', or null - which button is being set
+  const [forceRender, setForceRender] = useState(0); // Force re-render counter
 
   // ===================================================================
   // LOCATION HANDLERS
@@ -161,22 +163,22 @@ export default function CebuMap() {
       return;
     }
 
-    if (!destination || destination[0] === undefined || destination[1] === undefined) { 
-      console.log("Pin a location first, then click 'Set From'");
+    // If already targeting FROM and have destination, LOCK IT
+    if (targetingMode === 'from' && destination) {
+      const lat = destination[0];
+      const lng = destination[1];
+      const address = destination[2] || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      
+      setFromLocation([lat, lng, address]); 
+      setRouteMode('from');
+      setTargetingMode(null); // Stop targeting
+      console.log("FROM LOCKED");
       return;
     }
 
-    const lat = destination[0];
-    const lng = destination[1];
-    
-    setFromLocation([lat, lng, destination[2] || "From Location"]); 
-    setRouteMode('from');
-    
-    // Get full address via reverse geocoding
-    const address = await reverseGeocode(lat, lng);
-    if (address) {
-      setFromLocation([lat, lng, address]);
-    }
+    // START targeting FROM - now ONLY FROM button will update
+    setTargetingMode('from');
+    console.log("TARGETING FROM - now move pin to see ONLY FROM button update");
   };
 
   const setToPoint = async () => {
@@ -185,22 +187,22 @@ export default function CebuMap() {
       return;
     }
 
-    if (!destination || destination[0] === undefined || destination[1] === undefined) { 
-      console.log("Pin a location first, then click 'Set To'");
+    // If already targeting TO and have destination, LOCK IT
+    if (targetingMode === 'to' && destination) {
+      const lat = destination[0];
+      const lng = destination[1];
+      const address = destination[2] || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      
+      setToLocation([lat, lng, address]); 
+      setRouteMode('to');
+      setTargetingMode(null); // Stop targeting
+      console.log("TO LOCKED");
       return;
     }
 
-    const lat = destination[0];
-    const lng = destination[1];
-    
-    setToLocation([lat, lng, destination[2] || "To Location"]); 
-    setRouteMode('to');
-    
-    // Get full address via reverse geocoding
-    const address = await reverseGeocode(lat, lng);
-    if (address) {
-      setToLocation([lat, lng, address]);
-    }
+    // START targeting TO - now ONLY TO button will update
+    setTargetingMode('to');
+    console.log("TARGETING TO - now move pin to see ONLY TO button update");
   };
 
   // ===================================================================
@@ -228,6 +230,7 @@ export default function CebuMap() {
     setFromLocation(null);
     setToLocation(null);
     setRouteMode(null);
+    setTargetingMode(null);
     setAiSuggestion(null);
     setAiError(null);
     console.log("Route cleared");
@@ -275,13 +278,23 @@ export default function CebuMap() {
       click: async (e) => {
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
-        setDestination([lat, lng]); 
+        
+        // Always update destination for the blue marker and button preview
+        const coordinatesText = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        setDestination([lat, lng, coordinatesText]); 
+        setForceRender(prev => prev + 1); // Force component re-render
+        console.log('Map clicked - setting destination:', [lat, lng, coordinatesText]);
         
         // Get address via reverse geocoding
         const address = await reverseGeocode(lat, lng);
         if (address) {
           setDestination([lat, lng, address]);
+          setForceRender(prev => prev + 1); // Force component re-render
+          console.log('Address loaded - updating destination:', [lat, lng, address]);
         }
+        
+        // NOTE: We don't automatically set the location here anymore
+        // The user needs to click the button again to confirm the location
       },
     });
 
@@ -341,6 +354,13 @@ export default function CebuMap() {
       // Ignore errors during map initialization
     }
   }, [destination]);
+
+  // Force re-render when destination changes while in targeting mode
+  useEffect(() => {
+    if (targetingMode && destination) {
+      setForceRender(prev => prev + 1);
+    }
+  }, [destination, targetingMode]);
 
   // ===================================================================
   // RENDER
@@ -412,7 +432,18 @@ export default function CebuMap() {
             color: fromLocation ? "white" : "yellow", font: "bold",
             opacity: fromLocation ? 0.7 : 1
           }}>
-            {fromLocation && fromLocation[2] ? fromLocation[2] : (destination && destination[2] ? destination[2] : 'Set From')}
+            {(() => {
+              // If FROM is locked, show locked address
+              if (fromLocation && fromLocation[2]) {
+                return fromLocation[2];
+              }
+              // ONLY update FROM if TO is NOT locked yet
+              if (!toLocation && destination && destination[2]) {
+                return destination[2];
+              }
+              // Default
+              return 'Set From';
+            })()}
           </button>
         </div>
 
@@ -425,7 +456,18 @@ export default function CebuMap() {
             color: "white", cursor: toLocation ? "not-allowed" : "pointer",
             width: '200px', height: '40px', opacity: toLocation ? 0.7 : 1
           }}>
-            {toLocation && toLocation[2] ? toLocation[2] : (destination && destination[2] ? destination[2] : 'Set To')}
+            {(() => {
+              // If TO is locked, show locked address  
+              if (toLocation && toLocation[2]) {
+                return toLocation[2];
+              }
+              // ONLY update TO if FROM is locked AND current pin exists
+              if (fromLocation && fromLocation[2] && destination && destination[2]) {
+                return destination[2];
+              }
+              // Default
+              return 'Set To';
+            })()}
           </button>
         </div>
 

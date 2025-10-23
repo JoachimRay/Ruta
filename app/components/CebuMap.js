@@ -163,22 +163,22 @@ export default function CebuMap() {
       return;
     }
 
-    // If already in targeting mode and we have destination, CONFIRM and LOCK the location
-    if (targetingMode === 'from' && destination && destination[0] !== undefined && destination[1] !== undefined) {
+    // If already targeting FROM and have destination, LOCK IT
+    if (targetingMode === 'from' && destination) {
       const lat = destination[0];
       const lng = destination[1];
       const address = destination[2] || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
       
       setFromLocation([lat, lng, address]); 
       setRouteMode('from');
-      setTargetingMode(null); // EXIT targeting mode - button will stop updating
-      console.log("From location LOCKED:", address);
+      setTargetingMode(null); // Stop targeting
+      console.log("FROM LOCKED");
       return;
     }
 
-    // ENTER targeting mode - now button will update as you move pin
+    // START targeting FROM - now ONLY FROM button will update
     setTargetingMode('from');
-    console.log("ENTERED targeting mode for 'from' - now move pin around to see button update");
+    console.log("TARGETING FROM - now move pin to see ONLY FROM button update");
   };
 
   const setToPoint = async () => {
@@ -187,22 +187,22 @@ export default function CebuMap() {
       return;
     }
 
-    // If already in targeting mode and we have destination, CONFIRM and LOCK the location
-    if (targetingMode === 'to' && destination && destination[0] !== undefined && destination[1] !== undefined) {
+    // If already targeting TO and have destination, LOCK IT
+    if (targetingMode === 'to' && destination) {
       const lat = destination[0];
       const lng = destination[1];
       const address = destination[2] || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
       
       setToLocation([lat, lng, address]); 
       setRouteMode('to');
-      setTargetingMode(null); // EXIT targeting mode - button will stop updating
-      console.log("To location LOCKED:", address);
+      setTargetingMode(null); // Stop targeting
+      console.log("TO LOCKED");
       return;
     }
 
-    // ENTER targeting mode - now button will update as you move pin
+    // START targeting TO - now ONLY TO button will update
     setTargetingMode('to');
-    console.log("ENTERED targeting mode for 'to' - now move pin around to see button update");
+    console.log("TARGETING TO - now move pin to see ONLY TO button update");
   };
 
   // ===================================================================
@@ -279,22 +279,19 @@ export default function CebuMap() {
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
         
-        // Set destination with loading state first (no coordinates shown)
-        setDestination([lat, lng, null]); // null means loading
+        // Always update destination for the blue marker and button preview
+        const coordinatesText = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        setDestination([lat, lng, coordinatesText]); 
         setForceRender(prev => prev + 1); // Force component re-render
-        console.log('Map clicked - loading address for:', [lat, lng]);
+        console.log('Map clicked - setting destination:', [lat, lng, coordinatesText]);
         
         // Get address via reverse geocoding
         const address = await reverseGeocode(lat, lng);
         if (address) {
           setDestination([lat, lng, address]);
-          console.log('Address loaded:', address);
-        } else {
-          // Fallback to coordinates only if address completely fails
-          setDestination([lat, lng, `${lat.toFixed(4)}, ${lng.toFixed(4)}`]);
-          console.log('Address failed, using coordinates');
+          setForceRender(prev => prev + 1); // Force component re-render
+          console.log('Address loaded - updating destination:', [lat, lng, address]);
         }
-        setForceRender(prev => prev + 1); // Force component re-render
         
         // NOTE: We don't automatically set the location here anymore
         // The user needs to click the button again to confirm the location
@@ -357,6 +354,13 @@ export default function CebuMap() {
       // Ignore errors during map initialization
     }
   }, [destination]);
+
+  // Force re-render when destination changes while in targeting mode
+  useEffect(() => {
+    if (targetingMode && destination) {
+      setForceRender(prev => prev + 1);
+    }
+  }, [destination, targetingMode]);
 
   // ===================================================================
   // RENDER
@@ -429,13 +433,15 @@ export default function CebuMap() {
             opacity: fromLocation ? 0.7 : 1
           }}>
             {(() => {
+              // If FROM is locked, show locked address
               if (fromLocation && fromLocation[2]) {
                 return fromLocation[2];
               }
-              if (targetingMode === 'from' && destination) {
-                // Show loading if address is null, otherwise show address
-                return destination[2] || 'Loading...';
+              // ONLY update FROM if TO is NOT locked yet
+              if (!toLocation && destination && destination[2]) {
+                return destination[2];
               }
+              // Default
               return 'Set From';
             })()}
           </button>
@@ -451,13 +457,15 @@ export default function CebuMap() {
             width: '200px', height: '40px', opacity: toLocation ? 0.7 : 1
           }}>
             {(() => {
+              // If TO is locked, show locked address  
               if (toLocation && toLocation[2]) {
                 return toLocation[2];
               }
-              if (targetingMode === 'to' && destination) {
-                // Show loading if address is null, otherwise show address
-                return destination[2] || 'Loading...';
+              // ONLY update TO if FROM is locked AND current pin exists
+              if (fromLocation && fromLocation[2] && destination && destination[2]) {
+                return destination[2];
               }
+              // Default
               return 'Set To';
             })()}
           </button>

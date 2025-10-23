@@ -386,5 +386,386 @@
         [123.8985, 10.315]
       ]
     }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "26: Compostela to Mandaue City to A.S. Fortuna to Foodland",
+      "jeepney_code": "26",
+      "operator": "COMTRANSCO",
+      "description": "From Compostela passing through Mandaue City, A.S. Fortuna, and ending near Foodland.",
+      "stops": [
+        "Compostela",
+        "Mandaue City",
+        "A.S. Fortuna",
+        "Foodland"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [124.016, 10.455],
+        [123.958, 10.385],
+        [123.935, 10.345],
+        [123.909, 10.329]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "26: Compostela to Mandaue to Parkmall",
+      "jeepney_code": "26",
+      "operator": "COMTRANSCO",
+      "description": "From Compostela heading south through Mandaue and terminating at Parkmall.",
+      "stops": [
+        "Compostela",
+        "Mandaue",
+        "Parkmall"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [124.016, 10.455],
+        [123.947, 10.385],
+        [123.929, 10.325]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "46: Carcar to Tabunok",
+      "jeepney_code": "46",
+      "operator": "CPOTC",
+      "description": "From Carcar City heading north through San Fernando and terminating at Tabunok.",
+      "stops": [
+        "Carcar City",
+        "San Fernando",
+        "Tabunok"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.623, 10.112],
+        [123.727, 10.246],
+        [123.849, 10.267]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "CPOTC: Naga to I.T. Park",
+      "jeepney_code": "46",
+      "operator": "CPOTC",
+      "description": "From Naga City heading north along the national highway to I.T. Park in Cebu City.",
+      "stops": [
+        "Naga City",
+        "Minglanilla",
+        "Tabunok",
+        "Cebu City",
+        "I.T. Park"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.755, 10.263],
+        [123.841, 10.288],
+        [123.899, 10.315],
+        [123.905, 10.324]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "44: Naga to Cebu City to I.T. Park",
+      "jeepney_code": "44",
+      "operator": "CSB Transport Service Corporation",
+      "description": "From Naga City traveling northward through Cebu City and ending at I.T. Park.",
+      "stops": [
+        "Naga City",
+        "Minglanilla",
+        "Cebu City",
+        "I.T. Park"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.755, 10.263],
+        [123.874, 10.308],
+        [123.905, 10.324]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "17B: Apas to Lahug to Jones to Carbon",
+      "jeepney_code": "17B",
+      "operator": "Cebu United Transport Cooperative",
+      "description": "From Apas passing through Lahug, Jones Avenue, and ending at Carbon Market.",
+      "stops": [
+        "Apas",
+        "Lahug",
+        "Jones Avenue",
+        "Carbon Market"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.904, 10.333],
+        [123.902, 10.320],
+        [123.899, 10.306],
+        [123.898, 10.296]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "21B: Ibabao to Mandaue to Ayala",
+      "jeepney_code": "21B",
+      "operator": "Cebu United Transport Cooperative",
+      "description": "From Ibabao in Mandaue passing through the city center and terminating at Ayala Center Cebu.",
+      "stops": [
+        "Ibabao",
+        "Mandaue",
+        "Ayala Center Cebu"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.948, 10.338],
+        [123.936, 10.329],
+        [123.907, 10.316]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "24: Consolacion to Cebu City",
+      "jeepney_code": "24",
+      "operator": "Cebu United Transport Cooperative",
+      "description": "From Consolacion heading south along the highway to Cebu City.",
+      "stops": [
+        "Consolacion",
+        "Mandaue",
+        "Cebu City"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.961, 10.376],
+        [123.936, 10.329],
+        [123.905, 10.315]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "09F: Basak Ibabao to Colon",
+      "jeepney_code": "09F",
+      "operator": "EL PARDO TSC",
+      "description": "From Basak Ibabao traveling north through Cebu City to Colon.",
+      "stops": [
+        "Basak Ibabao",
+        "Colon"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.872, 10.289],
+        [123.898, 10.298],
+        [123.899, 10.305]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "10F: Bulacao to Colon",
+      "jeepney_code": "10F",
+      "operator": "EL PARDO TSC",
+      "description": "From Bulacao passing through Pardo and heading north to Colon.",
+      "stops": [
+        "Bulacao",
+        "Pardo",
+        "Colon"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.865, 10.253],
+        [123.868, 10.273],
+        [123.899, 10.305]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "10H: Bulacao to SM City Cebu",
+      "jeepney_code": "10H",
+      "operator": "EL PARDO TSC",
+      "description": "From Bulacao through Colon up to SM City Cebu.",
+      "stops": [
+        "Bulacao",
+        "Colon",
+        "SM City Cebu"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.865, 10.253],
+        [123.899, 10.305],
+        [123.916, 10.311]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "10M: Bulacao to SM City Cebu",
+      "jeepney_code": "10M",
+      "operator": "EL PARDO TSC",
+      "description": "From Bulacao via Pardo heading north to SM City Cebu.",
+      "stops": [
+        "Bulacao",
+        "Pardo",
+        "SM City Cebu"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.865, 10.253],
+        [123.873, 10.272],
+        [123.916, 10.311]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "24G: Consolacion to Talamban",
+      "jeepney_code": "24G",
+      "operator": "GO THE EXTRA MILE! TSC",
+      "description": "From Consolacion traveling west via A.S. Fortuna to Talamban.",
+      "stops": [
+        "Consolacion",
+        "A.S. Fortuna",
+        "Talamban"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.963, 10.376],
+        [123.938, 10.335],
+        [123.913, 10.361]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "12D: Labangon to Colon",
+      "jeepney_code": "12D",
+      "operator": "Hermares Transit",
+      "description": "From Labangon heading north through Cebu City to Colon.",
+      "stops": [
+        "Labangon",
+        "Colon"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.891, 10.292],
+        [123.899, 10.305]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "11A: Laray to Colon",
+      "jeepney_code": "11A",
+      "operator": "INTRASCO",
+      "description": "From Laray passing through Inayawan and heading north to Colon.",
+      "stops": [
+        "Laray",
+        "Inayawan",
+        "Colon"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.870, 10.247],
+        [123.875, 10.265],
+        [123.899, 10.305]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "11A: Laray to SM City Cebu",
+      "jeepney_code": "11A",
+      "operator": "INTRASCO",
+      "description": "From Laray through Inayawan and Colon continuing north to SM City Cebu.",
+      "stops": [
+        "Laray",
+        "Inayawan",
+        "Colon",
+        "SM City Cebu"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.870, 10.247],
+        [123.875, 10.265],
+        [123.899, 10.305],
+        [123.916, 10.311]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "route_name": "Talisay to I.T. Park",
+      "jeepney_code": "N/A",
+      "operator": "INTRASCO",
+      "description": "From Talisay heading north through Emall to I.T. Park in Cebu City.",
+      "stops": [
+        "Talisay",
+        "Emall",
+        "I.T. Park"
+      ]
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [123.846, 10.244],
+        [123.895, 10.296],
+        [123.909, 10.325]
+      ]
+    }
   }
 ]

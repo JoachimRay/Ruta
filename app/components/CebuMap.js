@@ -122,6 +122,10 @@ export default function CebuMap() {
   const [showModal, setShowModal] = useState(true);
   const [targetingMode, setTargetingMode] = useState(null); // 'from', 'to', or null - which button is being set
   const [forceRender, setForceRender] = useState(0); // Force re-render counter
+  const [panelHeight, setPanelHeight] = useState(300); // Panel height in pixels
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [dragStartHeight, setDragStartHeight] = useState(300);
 
   // ===================================================================
   // LOCATION HANDLERS
@@ -207,7 +211,51 @@ export default function CebuMap() {
     // If no pin and no TO location, clear destination to show pin
     setDestination(null);
     console.log("Click map to set TO location");
-  };  // ===================================================================
+  };
+
+  // ===================================================================
+  // PANEL DRAG HANDLERS
+  // ===================================================================
+  const handleTouchStart = (e) => {
+    setIsDragging(true);
+    setDragStartY(e.touches[0].clientY);
+    setDragStartHeight(panelHeight);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+    
+    const currentY = e.touches[0].clientY;
+    const deltaY = dragStartY - currentY; // Positive when dragging up
+    const newHeight = Math.max(120, Math.min(500, dragStartHeight + deltaY)); // Stricter limits
+    setPanelHeight(newHeight);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    // Snap to standard heights with stricter limits
+    if (panelHeight < 180) {
+      setPanelHeight(120); // Minimum height
+    } else if (panelHeight > 400) {
+      setPanelHeight(500); // Maximum height
+    } else {
+      setPanelHeight(300); // Default height
+    }
+  };
+
+  const handleMapClick = () => {
+    // When map is clicked, shrink panel to minimum
+    if (panelHeight > 150) {
+      setPanelHeight(120);
+    }
+  };
+
+  const handlePanelClick = () => {
+    // When panel area is clicked, reset to default height
+    setPanelHeight(300);
+  };
+
+  // ===================================================================
   // ROUTE FUNCTIONS
   // ===================================================================
   const showRoute = async () => {
@@ -278,6 +326,9 @@ export default function CebuMap() {
   function LocationMarker() {
     useMapEvents({
       click: async (e) => {
+        // Handle panel movement when map is clicked
+        handleMapClick();
+        
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
         
@@ -417,24 +468,31 @@ export default function CebuMap() {
 
       {/* From/To Location Panel */}
       <div style={{
-        width: 390, height: 200, backgroundColor: "#1C1C1C",
+        width: 390, height: 150, backgroundColor: "#1C1C1C",
         position: "absolute", top: 0, left: "0%", zIndex: 999, borderRadius: 16
       }}>
-        <div style={{ color: "white", fontSize: '15px', paddingTop: "20px", paddingLeft: "50px" }}>
-          From:
-        </div>
-        
         {/* From Button */}
-        <div style={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 50}}>
+        <div style={{padding: 10, display: 'flex', justifyContent: 'center', paddingTop: 25}}>
           <button onClick={setFromPoint} style={{
             fontSize: 'clamp(12px, 1vw, 15px)',
-            backgroundColor: fromLocation ? "#4CAF50" : "#1c1c1c",
+            backgroundColor: fromLocation ? "#4CAF50" : "#FFF",
             border: "none", padding: "8px 12px", borderRadius: "4px",
             cursor: fromLocation ? "not-allowed" : "pointer",
-            width: '200px', height: '40px', overflow: "hidden",
+            width: '300px', height: '50px', overflow: "hidden",
             color: fromLocation ? "white" : "yellow", font: "bold",
-            opacity: fromLocation ? 0.7 : 1
+            opacity: fromLocation ? 0.7 : 1,
+            position: 'relative'
           }}>
+            <span style={{
+              position: 'absolute',
+              top: '2px',
+              left: '8px',
+              fontSize: '10px',
+              color: '#999',
+              fontWeight: 'normal'
+            }}>
+              From
+            </span>
             {(() => {
               // If FROM is locked, show locked address
               if (fromLocation && fromLocation[2]) {
@@ -451,14 +509,28 @@ export default function CebuMap() {
         </div>
 
         {/* To Button */}
-        <div style={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 10}}> 
+        <div style={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 1}}> 
           <button onClick={setToPoint} style={{
             fontSize: 'clamp(12px, 3vw, 15px)',
             backgroundColor: toLocation ? "#f44336" : "#666",
             border: "none", padding: "8px 12px", borderRadius: "4px",
             color: "white", cursor: toLocation ? "not-allowed" : "pointer",
-            width: '200px', height: '40px', opacity: toLocation ? 0.7 : 1
+            width: '300px', height: '45px', opacity: toLocation ? 0.7 : 1,
+            position: 'relative'
           }}>
+
+            <span style={{
+              position: 'absolute',
+              top: '2px',
+              left: '8px',
+              fontSize: '10px',
+              color: '#999',
+              fontWeight: 'normal'
+            }}>
+              To:
+            </span>
+
+            
             {(() => {
               // If TO is locked, show locked address  
               if (toLocation && toLocation[2]) {
@@ -474,25 +546,36 @@ export default function CebuMap() {
           </button>
         </div>
 
-        {/* AI Suggestion Button */}
-        <div style={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 10}}> 
-          <button onClick={getAISuggestion} disabled={!fromLocation || !toLocation || loadingAI} style={{
-            fontSize: 'clamp(12px, 1vw, 15px)',
-            backgroundColor: loadingAI ? "#999" : "#FF9800",
-            border: "none", padding: "8px 12px", borderRadius: "4px", color: "white",
-            cursor: loadingAI || !fromLocation || !toLocation ? "not-allowed" : "pointer",
-            width: '200px', height: '40px', opacity: !fromLocation || !toLocation ? 0.5 : 1
-          }}>
-            {loadingAI ? 'Getting Suggestion...' : '🚍 Suggest Jeepney Route'}
-          </button>
-        </div>
+       
       </div>
 
       {/* Route Control Panel */}
-      <div style={{
-        width: 390, height: 300, backgroundColor: "#1C1C1C",
-        position: "absolute", bottom: 0, left: "0%", zIndex: 999, borderRadius: 16
-      }}>
+      <div 
+        style={{
+          width: 390, 
+          height: `${panelHeight}px`, 
+          backgroundColor: "#1C1C1C",
+          position: "absolute", 
+          bottom: "0px", 
+          left: "0%", zIndex: 999, borderRadius: 16,
+          transition: isDragging ? 'none' : 'height 0.3s ease',
+          cursor: 'grab',
+          touchAction: 'none'
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onClick={handlePanelClick}
+      >
+
+
+
+        {/* Drag Handle */}
+        <div style={{
+          width: '40px', height: '4px', backgroundColor: '#999',
+          borderRadius: '2px', margin: '8px auto 0',
+          cursor: 'grab'
+        }}></div>
         {/* AI Suggestion Display */}
         {aiSuggestion && (
           <div style={{
@@ -527,16 +610,36 @@ export default function CebuMap() {
             padding: 15, backgroundColor: '#FFEBEE', borderRadius: 8,
             margin: '10px 20px', color: '#C62828', fontSize: 14
           }}>
-            ⚠️ {aiError}
+             {aiError}
           </div>
         )}
 
+         {/* AI Suggestion Button */}
+        <div style={{padding: 20, display: 'flex', justifyContent: 'center', paddingTop: 10}}> 
+          <button onClick={getAISuggestion} disabled={!fromLocation || !toLocation || loadingAI} style={{
+            fontSize: 'clamp(12px, 1vw, 15px)',
+            backgroundColor: loadingAI ? "#FFF" : "#FFD700",
+            border: "none", padding: "8px 12px", borderRadius: "4px", color: "white",
+            cursor: loadingAI || !fromLocation || !toLocation ? "not-allowed" : "pointer",
+            width: '200px', height: '40px', opacity: !fromLocation || !toLocation ? 0.5 : 1
+          }}>
+            {loadingAI ? 'Getting Suggestion...' : 'Show Ruta'}
+          </button>
+        </div>
+
         {/* Control Buttons */}
         <div style={{
-          position: "absolute", bottom: '10px', left: '10px', right: '10px',
+          position: "absolute", 
+          bottom: '10px', 
+          left: '10px', right: '10px',
           zIndex: 1000, display: "flex", gap: 6, color: "#fff",
           flexWrap: "wrap", justifyContent: 'center'
         }}>
+
+          
+          
+          
+          
           <button onClick={showRoute} style={{
             fontSize: 'clamp(12px, 3vw, 15px)', backgroundColor: "#2196F3",
             border: "none", padding: "8px 12px", borderRadius: "4px",
@@ -555,6 +658,7 @@ export default function CebuMap() {
             Clear Route
           </button>
         </div>
+
       </div>
 
       {/* Main Map */}
